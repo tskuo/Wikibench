@@ -1,0 +1,55 @@
+{
+	"entityType": "diff",
+	"entityId": 1139030679,
+	"facets": [{
+			"damaging": [{
+					"author": "Tzusheng",
+					"label": false,
+					"comment": "This is a sample comment",
+					"origin": "WikibenchPlugIn",
+					"created": "time1",
+					"touched": "time2",
+					"primary": true,
+					"category": [],
+					"autolabelled": false
+				},
+				{
+					"author": "EpochFail",
+					"label": false,
+					"comment": "This is a sample comment",
+					"origin": "WikibenchPlugIn",
+					"created": "time1",
+					"touched": "time2",
+					"primary": false,
+					"category": [],
+					"autolabelled": false
+				}
+			]
+		},
+		{
+			"goodfaith": [{
+					"author": "Tzusheng",
+					"label": true,
+					"comment": "This is a sample comment",
+					"origin": "WikibenchPlugIn",
+					"created": "time1",
+					"touched": "time2",
+					"primary": true,
+					"category": [],
+					"autolabelled": false
+				},
+				{
+					"author": "EpochFail",
+					"label": true,
+					"comment": "This is a sample comment",
+					"origin": "WikibenchPlugIn",
+					"created": "time1",
+					"touched": "time2",
+					"primary": false,
+					"category": [],
+					"autolabelled": false
+				}
+			]
+		}
+	]
+}
