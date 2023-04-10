@@ -2,24 +2,32 @@
     $(document).ready(function() {
         if(mw.config.get("wgDiffNewId") !== null) {
 
-            let mwApi = new mw.Api();
+            var mwApi = new mw.Api();
 
             console.log("diff page");
             
             mw.loader.using(["oojs-ui-core", "oojs-ui-widgets", "oojs-ui-windows"]).done(function () {
                 
-                let diffNewId =  mw.config.get("wgDiffNewId");
-                let userName = mw.config.get("wgUserName");
-                let userId = mw.config.get("wgUserId");
+                var diffNewId =  mw.config.get("wgDiffNewId");
+                var userName = mw.config.get("wgUserName");
+                var userId = mw.config.get("wgUserId");
 
-                let diffNewIdInput = new OO.ui.TextInputWidget({
-                    value: diffNewId,
-                    readOnly: true
-                });
+                // Diff new id
 
-                let editQualityLabel = "";     
+                // var diffNewIdInput = new OO.ui.TextInputWidget({
+                //     value: diffNewId,
+                //     disareabled: true
+                // });
 
-                let editQualityBtns = new OO.ui.ButtonSelectWidget({
+                var diffNewIdInput = new OO.ui.LabelWidget({
+                    label: diffNewId.toString()
+                })
+
+                // Edit quality widgets
+
+                var editDamageLabel = "";     
+
+                var editDamageBtns = new OO.ui.ButtonSelectWidget({
                     items: [
                         new OO.ui.ButtonOptionWidget({
                             data: "damaging",
@@ -30,21 +38,33 @@
                             data: "not damaging",
                             label: "not damaging",
                             icon: "success"
-                        }),
-                        new OO.ui.ButtonOptionWidget({
-                            data: "unsure",
-                            label: "unsure"
                         })
                     ]
                 });
 
-                editQualityBtns.on("choose", function(item){
-                    editQualityLabel = item.getData();
+                editDamageBtns.on("choose", function(item){
+                    editDamageLabel = item.getData();
                 });
 
-                let userIntentLabel = "";  
+                // var editQualityLowConfidence = new OO.ui.CheckboxInputWidget();
 
-                let userIntentBtns = new OO.ui.ButtonSelectWidget({
+                // var editQualityWidgets = new OO.ui.Widget({
+                //     content: [
+                //         new OO.ui.HorizontalLayout({
+                //             items: [
+                //                 editQualityBtns,
+                //                 editQualityLowConfidence
+                //             ]
+                //         })
+                //     ]
+                // });
+
+                
+                // User intent widgets
+
+                var userIntentLabel = "";  
+
+                var userIntentBtns = new OO.ui.ButtonSelectWidget({
                     items: [
                         new OO.ui.ButtonOptionWidget({
                             data: "bad faith",
@@ -55,10 +75,6 @@
                             data: "good faith",
                             label: "good faith",
                             icon: "heart"
-                        }),
-                        new OO.ui.ButtonOptionWidget({
-                            data: "unsure",
-                            label: "unsure"
                         })
                     ]
                 });
@@ -67,14 +83,28 @@
                     userIntentLabel = item.getData();
                 });
 
-                let attentionFlag = new OO.ui.CheckboxInputWidget();
+                // var userIntentLowConfidence = new OO.ui.CheckboxInputWidget();
 
-                let commentInput = new OO.ui.MultilineTextInputWidget({
-                    placeholder: "A brief comment on the labels your provide",
+                // var userIntentWidgets = new OO.ui.Widget({
+                //     content: [
+                //         new OO.ui.HorizontalLayout({
+                //             items: [
+                //                 userIntentBtns,
+                //                 userIntentLowConfidence
+                //             ]
+                //         })
+                //     ]
+                // });
+
+                var lowConfidence = new OO.ui.CheckboxInputWidget();
+
+
+                var noteInput = new OO.ui.MultilineTextInputWidget({
+                    placeholder: "Add a note to your label",
                     rows: 3
                 });
 
-                let submitBtn = new OO.ui.ButtonWidget({
+                var submitBtn = new OO.ui.ButtonWidget({
                     label: "Submit",
                     flags: [
                         "primary",
@@ -84,8 +114,8 @@
 
                 submitBtn.on("click", function(){
                     // labels are required for submission
-                    if (editQualityLabel === "" || userIntentLabel === ""){
-                        OO.ui.alert("Edit quality and user intent labels are required for submission.").done(function(){
+                    if (editDamageLabel === "" || userIntentLabel === ""){
+                        OO.ui.alert("Edit damage and user intent labels are required for Wikibench submission.").done(function(){
                             // console.log("User closed the dialog.");
                         });
                     }
@@ -94,7 +124,7 @@
                     }
                     else {
 
-                        let title = "User:Tzusheng/sandbox/Wikipedia:Wikibench/Diff:" + diffNewId.toString();
+                        var title = "User:Tzusheng/sandbox/Wikipedia:Wikibench/Diff:" + diffNewId.toString();
                         
                         mwApi.get({
                             action: "query",
@@ -104,52 +134,58 @@
                             format: "json"
                         }).then(function(ret){
 
-                            let editQualityMetaLabel = {
-                                "entityType": "diff",
-                                "entityId": diffNewId,
+                            var editDamageSubmission = {
                                 "userName": userName,
                                 "userId": userId,
-                                "label": editQualityLabel,
-                                "comment": commentInput.getValue(),
-                                "origin": "WikibenchPlugIn",
+                                "label": editDamageLabel,
+                                "note": noteInput.getValue(),
+                                "origin": "WikibenchDiffPlugIn",
                                 "created": "time1",
                                 "touched": "time2",
-                                "primary": false,
-                                "flagged": attentionFlag.isSelected(),
+                                "lowConfidence": lowConfidence.isSelected(),
                                 "category": [],
-                                "autolabelled": false
                             };
     
-                            let userIntentMetaLabel = {
-                                "entityType": "diff",
-                                "entityId": diffNewId,
+                            var userIntentSubmission = {
                                 "userName": userName,
                                 "userId": userId,
                                 "label": userIntentLabel,
-                                "comment": commentInput.getValue(),
-                                "origin": "WikibenchPlugIn",
+                                "comment": noteInput.getValue(),
+                                "origin": "WikibenchDiffPlugIn",
                                 "created": "time1",
                                 "touched": "time2",
-                                "primary": false,
-                                "flagged": attentionFlag.isSelected(),
                                 "category": [],
-                                "autolabelled": false
                             };
 
-                            let revisionId = Object.keys(ret.query.pages)[0];
+                            var revisionId = Object.keys(ret.query.pages)[0];
                             if (revisionId === "-1") {
                                 // page don't exist -> primary label
                                 console.log("page don't exist");
 
-                                editQualityMetaLabel.primary = true;
-                                userIntentMetaLabel.primary = true;
-
-                                let entityPageText = {
+                                var entityPageContent = {
                                     "entityType": "diff",
                                     "entityId": diffNewId,
                                     "facets": {
-                                        "editQuality": [editQualityMetaLabel],
-                                        "userIntent": [userIntentMetaLabel]
+                                        "editDamage": {
+                                            "primaryLabel": {
+                                                "lastModifier": userName,
+                                                "lastModifierId": diffNewId,
+                                                "label": editDamageLabel,
+                                                "touched": "time2",
+                                                "autolabeled": false
+                                            },
+                                            "individualLabels": [editDamageSubmission]
+                                        },
+                                        "userIntent": {
+                                            "primaryLabel": {
+                                                "lastModifier": userName,
+                                                "lastModifierId": diffNewId,
+                                                "label": userIntentLabel,
+                                                "touched": "time2",
+                                                "autolabeled": false
+                                            },
+                                            "individualLabels": [userIntentSubmission]
+                                        }
                                     }
                                 };
 
@@ -157,11 +193,11 @@
                                     action: "edit",
                                     title: "User:Tzusheng/sandbox/Wikipedia:Wikibench/Diff:" + diffNewId.toString(),
                                     section: 0,
-                                    text: JSON.stringify(entityPageText),
-                                    summary: "new label submission",
+                                    text: JSON.stringify(entityPageContent),
+                                    summary: "create entity page and submit primary and individual labels",
                                     createonly: true
                                 }).done(function(result,jqXHR){
-                                    console.log("created successfully");
+                                    console.log("Success: Entity page creation.");
                                 }).fail(function(code,result){
                                     if ( code === "http" ) {
                                         mw.log( "HTTP error: " + result.textStatus ); // result.xhr contains the jqXHR object
@@ -183,57 +219,48 @@
                     }
                 });
 
-                let fieldset = new OO.ui.FieldsetLayout({ 
+                var fieldset = new OO.ui.FieldsetLayout({ 
                     label: "Wikibench Plug-In",
-                    classes: ["wikibench-plugin"]
+                    id: "wikibench-diff-plugin",
+                    // help: "please check"
                 });
 
                 fieldset.addItems([
                     new OO.ui.FieldLayout(diffNewIdInput, {
                         label: "Diff new ID",
-                        align: "left",
-                        help: "Revision ID of the new revision when viewing a diff. Auto populated and read only."
+                        align: "left"
+                        //help: "Revision ID of the new revision when viewing a diff. Auto populated and read only."
                     }),
 
-                    new OO.ui.FieldLayout(editQualityBtns, {
-                        label: "Edit quality",
+                    new OO.ui.FieldLayout(editDamageBtns, {
+                        label: "Edit damage *",
                         align: "left",
-                        help: "Whether this edit causes damage to the article."
+                        //help: "Whether this edit causes damage to the article."
                     }),
 
                     new OO.ui.FieldLayout(userIntentBtns, {
-                        label: "User intent",
+                        label: "User intent *",
                         align: "left",
-                        help: "Whether this edit was saved in good or bad faith by the editor."
+                        //help: "Whether this edit was saved in good or bad faith by the editor."
                     }),
 
-                    new OO.ui.FieldLayout(attentionFlag, {
-                        label: "Flag for attention",
+                    new OO.ui.FieldLayout(lowConfidence, {
+                        label: "Low confidence",
+                        algin: "left"
+
+                    }),
+
+                    new OO.ui.FieldLayout(noteInput, {
+                        label: "Note",
                         align: "left"
-                        //help: "(optional) Check the box if you'd like to flag your label for other people's attention, for example, when you are unsure about your labels."
                     }),
 
-                    new OO.ui.FieldLayout(commentInput, {
-                        label: "Comment",
-                        align: "left",
-                        help: "(optional)",
-                        helpInline: true
-                    }),
-
-                    new OO.ui.FieldLayout(submitBtn, {
-                        align: "right"
-                    })
+                    new OO.ui.FieldLayout(submitBtn, {})
                 ]);
 
                 $("#siteSub").append(fieldset.$element);
 
             });
-            
-            $(".wikibench-plugin").css({
-                "background-color": "#f8f9fa",
-                "padding": "10px"
-            });
-
         }
         else {
             console.log("not diff page");

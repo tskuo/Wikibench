@@ -4,7 +4,7 @@
 
         let mwApi = new mw.Api();
 
-        let dataList = [];
+        let allLabels = [];
 
         let prefixsearchParams = {
             action: "query",
@@ -34,49 +34,37 @@
                 for (const r in revisions) {
                     label = JSON.parse(revisions[r].revisions[0]["*"]);
 
-                    let editQualityLabels = [], editQualityPrimary = "";
-                    let userIntentLabels = [], userIntentPrimary = "";
-                    let flagged = false;
+                    var editDamagePrimary = label.facets.editDamage.primaryLabel.label;
+                    var userIntentPrimary = label.facets.userIntent.primaryLabel.label;
 
-                    for (const e of label.facets.editQuality) {
-                        editQualityLabels.push(e.label);
-                        if (e.primary === true) {
-                            editQualityPrimary = e.label;
-                        }
-                        if (e.flagged) {
-                            flagged = true;
-                        }
+                    let editDamageLabels = [];
+                    let userIntentLabels = [];
+
+                    for (const e of label.facets.editDamage.individualLabels) {
+                        editDamageLabels.push(e.label);
                     }
 
-                    for (const u of label.facets.userIntent) {
+                    for (const u of label.facets.userIntent.individualLabels) {
                         userIntentLabels.push(u.label);
-                        if (u.primary === true) {
-                            userIntentPrimary = u.label;
-                        }
-                        if (u.flagged) {
-                            flagged = true;
-                        }
                     }
 
-                    if (editQualityLabels.length !== userIntentLabels.length) {
+                    if (editDamageLabels.length !== userIntentLabels.length) {
                         console.log("ALERT: label counts differ across facets");
                     }
 
                     let hrefLink = "<a href=\"/wiki/User:Tzusheng/sandbox/Wikipedia:Wikibench/Diff:" + label.entityId.toString() + "\"></a>";
-                    let flagcell = ""
-                    if (flagged) flagcell = "flagged";
 
                     table.append($('<tr>')
                         .append($("<th>").text(label.entityId).wrapInner(hrefLink).attr("scope","row"))
-                        .append($('<td>').text(editQualityPrimary))
+                        .append($('<td>').text(editDamagePrimary))
                         .append($('<td>').text(""))
                         .append($('<td>').text(userIntentPrimary))
                         .append($('<td>').text(""))
-                        .append($('<td>').text(editQualityLabels.length.toString()))
-                        .append($('<td>').text(flagcell))
+                        .append($('<td>').text(editDamageLabels.length.toString()))
+                        .append($('<td>').text(""))
                     );
 
-                    dataList.push(label);
+                    allLabels.push(label);
                 }
             })
         });
