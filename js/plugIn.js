@@ -12,17 +12,6 @@
                 var userName = mw.config.get("wgUserName");
                 var userId = mw.config.get("wgUserId");
 
-                // Diff new id
-
-                // var diffNewIdInput = new OO.ui.TextInputWidget({
-                //     value: diffNewId,
-                //     disareabled: true
-                // });
-
-                var diffNewIdInput = new OO.ui.LabelWidget({
-                    label: diffNewId.toString()
-                })
-
                 // Edit quality widgets
 
                 var editDamageLabel = "";     
@@ -46,18 +35,19 @@
                     editDamageLabel = item.getData();
                 });
 
-                // var editQualityLowConfidence = new OO.ui.CheckboxInputWidget();
+                var editDamageLowConfidence = new OO.ui.CheckboxInputWidget();
 
-                // var editQualityWidgets = new OO.ui.Widget({
-                //     content: [
-                //         new OO.ui.HorizontalLayout({
-                //             items: [
-                //                 editQualityBtns,
-                //                 editQualityLowConfidence
-                //             ]
-                //         })
-                //     ]
-                // });
+                var editDamageWidgets = new OO.ui.Widget({
+                    content: [
+                        new OO.ui.HorizontalLayout({
+                            items: [
+                                editDamageBtns,
+                                editDamageLowConfidence,
+                                new OO.ui.LabelWidget({label: "low confidence"})
+                            ]
+                        })
+                    ]
+                });
 
                 
                 // User intent widgets
@@ -83,25 +73,23 @@
                     userIntentLabel = item.getData();
                 });
 
-                // var userIntentLowConfidence = new OO.ui.CheckboxInputWidget();
+                var userIntentLowConfidence = new OO.ui.CheckboxInputWidget();
 
-                // var userIntentWidgets = new OO.ui.Widget({
-                //     content: [
-                //         new OO.ui.HorizontalLayout({
-                //             items: [
-                //                 userIntentBtns,
-                //                 userIntentLowConfidence
-                //             ]
-                //         })
-                //     ]
-                // });
-
-                var lowConfidence = new OO.ui.CheckboxInputWidget();
-
+                var userIntentWidgets = new OO.ui.Widget({
+                    content: [
+                        new OO.ui.HorizontalLayout({
+                            items: [
+                                userIntentBtns,
+                                userIntentLowConfidence,
+                                new OO.ui.LabelWidget({label: "low confidence"})
+                            ]
+                        })
+                    ]
+                });
 
                 var noteInput = new OO.ui.MultilineTextInputWidget({
                     placeholder: "Add a note to your label",
-                    rows: 3
+                    rows: 2
                 });
 
                 var submitBtn = new OO.ui.ButtonWidget({
@@ -124,6 +112,8 @@
                     }
                     else {
 
+                        var entityPageWarningMessage = "{{Warning |heading=Script installation is required for reading and editing |This page is part of the Wikibench project on the English Wikipedia. Please read the [[en:User:Tzusheng/sandbox/Wikipedia:Wikibench/Campaign:Editquality|project page]] and install the script to see this page correctly rendered. Do not edit the source without installing the script.}}\n-----\n";
+
                         var title = "User:Tzusheng/sandbox/Wikipedia:Wikibench/Diff:" + diffNewId.toString();
                         
                         mwApi.get({
@@ -142,7 +132,7 @@
                                 "origin": "WikibenchDiffPlugIn",
                                 "created": "time1",
                                 "touched": "time2",
-                                "lowConfidence": lowConfidence.isSelected(),
+                                "lowConfidence": editDamageLowConfidence.isSelected(),
                                 "category": [],
                             };
     
@@ -150,10 +140,11 @@
                                 "userName": userName,
                                 "userId": userId,
                                 "label": userIntentLabel,
-                                "comment": noteInput.getValue(),
+                                "note": noteInput.getValue(),
                                 "origin": "WikibenchDiffPlugIn",
                                 "created": "time1",
                                 "touched": "time2",
+                                "lowConfidence": userIntentLowConfidence.isSelected(),
                                 "category": [],
                             };
 
@@ -169,7 +160,7 @@
                                         "editDamage": {
                                             "primaryLabel": {
                                                 "lastModifier": userName,
-                                                "lastModifierId": diffNewId,
+                                                "lastModifierId": userId,
                                                 "label": editDamageLabel,
                                                 "touched": "time2",
                                                 "autolabeled": false
@@ -179,7 +170,7 @@
                                         "userIntent": {
                                             "primaryLabel": {
                                                 "lastModifier": userName,
-                                                "lastModifierId": diffNewId,
+                                                "lastModifierId": userId,
                                                 "label": userIntentLabel,
                                                 "touched": "time2",
                                                 "autolabeled": false
@@ -193,7 +184,7 @@
                                     action: "edit",
                                     title: "User:Tzusheng/sandbox/Wikipedia:Wikibench/Diff:" + diffNewId.toString(),
                                     section: 0,
-                                    text: JSON.stringify(entityPageContent),
+                                    text: entityPageWarningMessage + JSON.stringify(entityPageContent),
                                     summary: "create entity page and submit primary and individual labels",
                                     createonly: true
                                 }).done(function(result,jqXHR){
@@ -221,38 +212,42 @@
 
                 var fieldset = new OO.ui.FieldsetLayout({ 
                     label: "Wikibench Plug-In",
-                    id: "wikibench-diff-plugin",
-                    // help: "please check"
+                    id: "wikibench-diff-plugin"
+                    // help: "info" 
                 });
 
                 fieldset.addItems([
-                    new OO.ui.FieldLayout(diffNewIdInput, {
+                    new OO.ui.FieldLayout(
+                        new OO.ui.LabelWidget({label: diffNewId.toString()}), {
                         label: "Diff new ID",
                         align: "left"
-                        //help: "Revision ID of the new revision when viewing a diff. Auto populated and read only."
+                        // help: "Revision ID of the new revision on the right when viewing a diff."
                     }),
 
-                    new OO.ui.FieldLayout(editDamageBtns, {
+                    new OO.ui.FieldLayout(editDamageWidgets, {
                         label: "Edit damage *",
                         align: "left",
-                        //help: "Whether this edit causes damage to the article."
+                        help: "The edit damage label indicates whether this edit causes damage to the article or not. The optional checkbox on the right lets you specify that you provide the label with lower confidence when you're not so sure."
                     }),
 
-                    new OO.ui.FieldLayout(userIntentBtns, {
+                    new OO.ui.FieldLayout(userIntentWidgets, {
                         label: "User intent *",
                         align: "left",
-                        //help: "Whether this edit was saved in good or bad faith by the editor."
+                        help: "The user intent label indicates whether the edit was saved in good or bad faith. The optional checkbox on the right lets you specify that you provide the label with lower confidence when you're not so sure."
                     }),
 
-                    new OO.ui.FieldLayout(lowConfidence, {
-                        label: "Low confidence",
-                        algin: "left"
+                    // new OO.ui.FieldLayout(lowConfidence, {
+                    //     label: "Low confidence",
+                    //     algin: "left"
 
-                    }),
+                    // }),
 
                     new OO.ui.FieldLayout(noteInput, {
                         label: "Note",
-                        align: "left"
+                        align: "left",
+                        help: "An optional note that explains the labels you provide and, in case of low confidence, why so."
+                        // helpInline: true
+
                     }),
 
                     new OO.ui.FieldLayout(submitBtn, {})

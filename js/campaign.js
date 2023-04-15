@@ -31,8 +31,9 @@
                 let label;
                 let table = $(".wikibench-data-table").find("tbody");
                 table.find("tr").remove();
+                console.log(revisions);
                 for (const r in revisions) {
-                    label = JSON.parse(revisions[r].revisions[0]["*"]);
+                    label = JSON.parse(revisions[r].revisions[0]["*"].split("-----")[1]);
 
                     var editDamagePrimary = label.facets.editDamage.primaryLabel.label;
                     var userIntentPrimary = label.facets.userIntent.primaryLabel.label;
@@ -61,7 +62,6 @@
                         .append($('<td>').text(userIntentPrimary))
                         .append($('<td>').text(""))
                         .append($('<td>').text(editDamageLabels.length.toString()))
-                        .append($('<td>').text(""))
                     );
 
                     allLabels.push(label);
