@@ -1,13 +1,22 @@
 (function ($, mw) {
     $(document).ready(function() {
 
-        const entityPagePrefix = "User:Tzusheng/sandbox/Wikipedia:Wikibench/Diff:";
+        // init
+        var wikibenchURL = "User:Tzusheng/sandbox/Wikipedia:Wikibench/";
+        var entityType = "diff";
+        var entityPageSplit = "-----";
+        var entityPagePrefix = wikibenchURL + entityType.charAt(0).toUpperCase() + entityType.slice(1) + ":";
+        var language = "en";
+        var facets = ["editDamage", "userIntent"];
+        var facetNames = {
+            editDamage: "edit damage",
+            userIntent: "user intent"
+        };
+
         var wgPageName = mw.config.get("wgPageName");
 
         if(wgPageName.startsWith(entityPagePrefix) && mw.config.get("wgAction") === "view") {
-            console.log("entity page");
             var mwApi = new mw.Api();
-            var language = "en";
             
             var diffTableHeader = "<table class=\"diff diff-contentalign-left diff-editfont-monospace\" data-mw=\"interface\"><colgroup><col class=\"diff-marker\"><col class=\"diff-content\"><col class=\"diff-marker\"><col class=\"diff-content\"></colgroup><tbody>";
             var diffTableFooter = "</tbody></table>";
@@ -48,10 +57,10 @@
                     page: wgPageName,
                     prop: "wikitext"
                 }).done(function(ret) {
-                    $(".mw-parser-output").find("table").remove(); // warning message
-                    $(".mw-parser-output").find("hr").remove(); // horizontal line
-                    $(".mw-parser-output").find("p").remove(); // data
-                    var label = JSON.parse(ret.parse.wikitext["*"].split("-----")[1]);
+                    $(".mw-parser-output").find("table").remove(); // remove warning message
+                    $(".mw-parser-output").find("hr").remove(); // remove horizontal line
+                    $(".mw-parser-output").find("p").remove(); // remove json content
+                    var label = JSON.parse(ret.parse.wikitext["*"].split(entityPageSplit)[1]);
 
                     var noticeBox = new OO.ui.MessageWidget({
                         type: "notice",
@@ -60,65 +69,89 @@
 
                     // Primary label
 
-                    var editDamagePrimary = new OO.ui.LabelWidget({
-                        label: label.facets.editDamage.primaryLabel.label
-                    });
-
-                    var userIntentPrimary = new OO.ui.LabelWidget({
-                        label: label.facets.userIntent.primaryLabel.label
-                    });
-
-                    var editPrimaryBtn = new OO.ui.ButtonWidget({
-                        label: 'Edit'
-                    });
-
                     var primaryFieldset = new OO.ui.FieldsetLayout({ 
                         label: "Primary label",
-                        classes: ["wikibench-entity-label"],
+                        classes: ["wikibench-entity-primary-label"],
+                    });
+
+                    facets.forEach(function(f) {
+                        var facetPrimaryLabel = new OO.ui.LabelWidget({
+                            label: label.facets[f].primaryLabel.label
+                        });
+                        primaryFieldset.addItems(
+                            new OO.ui.FieldLayout(facetPrimaryLabel, {
+                                label: facetNames[f].charAt(0).toUpperCase() + facetNames[f].slice(1),
+                                align: "left"
+                            })
+                        )
                     });
 
                     primaryFieldset.addItems([
-                        new OO.ui.FieldLayout(editDamagePrimary, {
-                            label: "Edit damage",
-                            align: "left"
-                        }),
-                        new OO.ui.FieldLayout(userIntentPrimary, {
-                            label: "User intent",
-                            align: "left"
-                        }),
+                        new OO.ui.FieldLayout(
+                            new OO.ui.LabelWidget({
+                                label: $("<a>")
+                                    .attr("href","/wiki/User:"+label.facets[facets[0]].primaryLabel.lastModifier)
+                                    .text(label.facets[facets[0]].primaryLabel.lastModifier)
+                            }), {
+                                label: "Last modifier",
+                                align: "left"
+                            }
+                        ),
+                        new OO.ui.FieldLayout(
+                            new OO.ui.LabelWidget({
+                                label: label.facets[facets[0]].primaryLabel.touched
+                            }), {
+                                label: "Last modified time",
+                                align: "left"
+                            }
+                        )
+                    ]);
+
+                    var editPrimaryBtn = new OO.ui.ButtonWidget({
+                        label: "Edit"
+                        // flags: ["primary", "progressive"]
+                    });
+
+                    primaryFieldset.addItems(
                         new OO.ui.FieldLayout(editPrimaryBtn, {
                             align: "left"
                         })
-                    ]);
+                    );
 
                     // User label
 
-                    var editDamageUser = new OO.ui.LabelWidget({
-                        label: label.facets.editDamage.individualLabels["0"].label
+                    var userFieldset = new OO.ui.FieldsetLayout({ 
+                        label: "Your label (" + userName + ")",
+                        classes: ["wikibench-entity-user-label"]
                     });
 
-                    var userIntentUser = new OO.ui.LabelWidget({
-                        label: label.facets.userIntent.individualLabels["0"].label
+                    facets.forEach(function(f) {
+                        var userLabel = "N/A";
+                        label.facets[f].individualLabels.forEach(function(l) {
+                            if (userName === l.userName) {
+                                userLabel = l.label;
+                                userNote = l.note;
+                                if (l.lowConfidence) {
+                                    userLabel += " (low confidence)";
+                                }
+                            }
+                        });
+                        userFieldset.addItems(
+                            new OO.ui.FieldLayout(
+                                new OO.ui.LabelWidget({
+                                    label: userLabel
+                                }), {
+                                    label: facetNames[f].charAt(0).toUpperCase() + facetNames[f].slice(1),
+                                    align: "left" 
+                            })
+                        );
                     });
 
                     var editUserBtn = new OO.ui.ButtonWidget({
-                        label: 'Edit'
-                    });
-
-                    var userFieldset = new OO.ui.FieldsetLayout({ 
-                        label: "Your label",
-                        classes: ["wikibench-entity-label"]
+                        label: "Edit"
                     });
 
                     userFieldset.addItems([
-                        new OO.ui.FieldLayout(editDamageUser, {
-                            label: "Edit damage",
-                            align: "left"
-                        }),
-                        new OO.ui.FieldLayout(userIntentUser, {
-                            label: "User intent",
-                            align: "left"
-                        }),
                         new OO.ui.FieldLayout(editUserBtn, {
                             align: "left"
                         })
@@ -185,7 +218,13 @@
                             .append(ret.parse.text["*"])
                             .append("<h3>Individual labels</h3>");
                         
-                        $(".wikibench-entity-label").css({
+                        $(".wikibench-entity-primary-label").css({
+                            "background-color": "#eaf3ff",
+                            "padding": "10px",
+                            "margin": "11px 0px"
+                        });
+                        
+                        $(".wikibench-entity-user-label").css({
                             "background-color": "#f8f9fa",
                             "padding": "10px",
                             "margin": "11px 0px"
@@ -227,9 +266,6 @@
 
                 })
             });
-        }
-        else {
-            console.log("not entity page");
         }
     });
 })(jQuery, mediaWiki);

@@ -22,8 +22,8 @@
                 action: "query",
                 prop: "revisions",
                 rvprop: "content",
-                format: "json",
-                titles: pageTitles.join("|")
+                titles: pageTitles.join("|"),
+                format: "json"
             }
             
             mwApi.get(revisionParams).done(function(revisionData) {
