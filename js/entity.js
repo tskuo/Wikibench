@@ -16,6 +16,10 @@
             editDamage: ["damaging", "not damaging"],
             userIntent: ["bad faith", "good faith"]
         };
+        var facetIcons = {
+            editDamage: ["alert", "success"],
+            userIntent: ["alert", "heart"]
+        };
 
         // get config
         var wgPageName = mw.config.get("wgPageName");
@@ -26,6 +30,7 @@
             var diffTableHeader = "<table class=\"diff diff-contentalign-left diff-editfont-monospace\" data-mw=\"interface\"><colgroup><col class=\"diff-marker\"><col class=\"diff-content\"><col class=\"diff-marker\"><col class=\"diff-content\"></colgroup><tbody>";
             var diffTableFooter = "</tbody></table>";
             var diffTableContent, diffTableTitle;
+            var windowManager;
             var noticeBox;
             var primaryFieldset;
             var userFieldset;
@@ -76,6 +81,10 @@
                 mw.loader.using(["oojs-ui-core", "oojs-ui-widgets", "oojs-ui-windows", "mediawiki.diff.styles"]).done(function(){
                     var label = JSON.parse(ret.parse.wikitext["*"].split(entityPageSplit)[1]);
 
+                    // Create and append a window manager.
+                    windowManager = new OO.ui.WindowManager();
+                    $(document.body).append(windowManager.$element);
+
                     noticeBox = new OO.ui.MessageWidget({
                         type: "notice",
                         label: "Please do not directly edit source of this page. To update the primary or your label, click the edit buttons. To discuss, visit the talk page."
@@ -122,6 +131,138 @@
 
                     var editPrimaryBtn = new OO.ui.ButtonWidget({
                         label: "Edit"
+                    });
+
+                    // Make a subclass of ProcessDialog for editing the primary label
+                    function MyDialog( config ) {
+                        MyDialog.super.call( this, config );
+                    }
+                    OO.inheritClass( MyDialog, OO.ui.ProcessDialog );
+
+                    // Specify a name for .addWindows()
+                    MyDialog.static.name = "editPrimaryDialog";
+                    MyDialog.static.title = "Edit primary label";
+                    MyDialog.static.actions = [
+                        { 
+                            flags: [ "primary", "progressive" ], 
+                            label: "Publish changes", 
+                            action: "publish" 
+                        },
+                        { 
+                            flags: "safe", 
+                            label: "Cancel" 
+                        }
+                    ];
+
+                    // Customize the initialize() function to add content and layouts: 
+                    MyDialog.prototype.initialize = function () {
+                        MyDialog.super.prototype.initialize.call( this );
+                        this.panel = new OO.ui.PanelLayout( { 
+                            padded: true, 
+                            expanded: false 
+                        } );
+                        this.content = new OO.ui.FieldsetLayout();
+                        
+                        this.primaryLabelMessage = new OO.ui.MessageWidget({
+                            type: "warning",
+                            label: "Please respect and refer to other Wikipedians' perspectives before editing the primary label on behalf of the community."
+                        });
+
+                        this.content.addItems([this.primaryLabelMessage]);
+
+                        this.primaryFacetBtns = {};
+                        for (var i = 0 ; i < facets.length; i++) {
+                            this.primaryFacetBtns[facets[i]] = new OO.ui.ButtonSelectWidget({
+                                items: [
+                                    new OO.ui.ButtonOptionWidget({
+                                        data: facetLabels[facets[i]][0],
+                                        label: facetLabels[facets[i]][0],
+                                        icon: facetIcons[facets[i]][0]
+                                    }),
+                                    new OO.ui.ButtonOptionWidget({
+                                        data: facetLabels[facets[i]][1],
+                                        label: facetLabels[facets[i]][1],
+                                        icon: facetIcons[facets[i]][1]
+                                    })
+                                ]
+                            });
+                            this.primaryFacetBtns[facets[i]].selectItemByLabel(label.facets[facets[i]].primaryLabel.label);
+                            this.content.addItems([
+                                new OO.ui.FieldLayout(this.primaryFacetBtns[facets[i]], {
+                                    label: facetNames[facets[i]].charAt(0).toUpperCase() + facetNames[facets[i]].slice(1),
+                                    align: "left"
+                                })
+                            ]);
+                        }
+
+                        this.primaryLabelSummary = new OO.ui.TextInputWidget({
+                            placeholder: "Briefly describe your changes"
+                        });
+
+                        this.content.addItems([
+                            new OO.ui.FieldLayout(this.primaryLabelSummary, {
+                                label: "Edit summary",
+                                align: "top"
+                            })
+                        ]);
+
+                        this.panel.$element.append( this.content.$element );
+                        this.$body.append( this.panel.$element );
+                    };
+
+                    MyDialog.prototype.getBodyHeight = function () {
+                        return this.panel.$element.outerHeight( true );
+                    };
+
+                    // Specify processes to handle the actions.
+                    MyDialog.prototype.getActionProcess = function ( action ) {
+                        if ( action === "publish" ) {
+                            // Create a new process to handle the action
+                            return new OO.ui.Process( function () {
+                                var primaryLabels = {}
+                                for (var i = 0; i < facets.length; i++) {
+                                    primaryLabels[facets[i]] = this.primaryFacetBtns[facets[i]].findSelectedItem().getData();
+                                }
+                                mwApi.get({
+                                    action: "query",
+                                    prop: "revisions",
+                                    rvprop: "content",
+                                    titles: wgPageName,
+                                    format: "json"
+                                }).done(function(ret) {
+                                    var revisions = ret.query.pages;
+                                    var pageId = Object.keys(revisions)[0];
+                                    var submitContent = JSON.parse(revisions[pageId].revisions[0]["*"].split(entityPageSplit)[1]);
+                                    for (var i = 0; i < facets.length; i++) {
+                                        submitContent.facets[facets[i]].primaryLabel.lastModifier = userName;
+                                        submitContent.facets[facets[i]].primaryLabel.lastModifierId = userId;
+                                        submitContent.facets[facets[i]].primaryLabel.label = primaryLabels[facets[i]];
+                                        submitContent.facets[facets[i]].primaryLabel.touched = "time";
+                                        submitContent.facets[facets[i]].primaryLabel.autolabeled = false;
+                                    }
+                                    console.log(submitContent);
+                                });
+
+                                // location.reload();
+                            }, this );
+                        }
+                        // Fallback to parent handler
+                        return MyDialog.super.prototype.getActionProcess.call( this, action );
+                    };
+
+
+                    // Create a new process dialog window.
+                    var editPrimaryDialog = new MyDialog();
+
+                    // Add the window to window manager using the addWindows() method.
+                    windowManager.addWindows( [ editPrimaryDialog ] );
+
+                    editPrimaryBtn.on("click", function() {
+                        
+                        // Open the window!   
+                        windowManager.openWindow( editPrimaryDialog );
+
+                        console.log("click");
                     });
 
                     primaryFieldset.addItems(
@@ -181,6 +322,10 @@
                         .append(userFieldset.$element);
 
                     // individual labels
+                    // for (var tmp = 0; tmp < facets.length; tmp++) {
+                    //     console.log(facets.length);
+                    //     console.log(tmp);
+                    //     f = facets[tmp];
                     facets.forEach(function(f) {
                         individualFieldset[f] = {};
                         var labelCount = {};
@@ -247,7 +392,6 @@
                                 .append("<h3>Individual labels</h3>");
                             facetLabels[f].forEach(function(l) {
                                 divRender.append(individualFieldset[f][l].$element);
-                                console.log("add element");
                                 individualFieldset[f][l].$element.find(".oo-ui-fieldsetLayout-header").click(function(){
                                     var header = $(this);
                                     var content = header.next();
@@ -258,6 +402,7 @@
                             });
                         });
                     });
+                    // }
                 });
             });
         }
