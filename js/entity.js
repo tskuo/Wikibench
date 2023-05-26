@@ -82,7 +82,7 @@
             });
 
             var setPageWidgets = getPageContent.then(function(ret) {
-                mw.loader.using(["oojs-ui-core", "oojs-ui-widgets", "oojs-ui-windows", "mediawiki.diff.styles"]).done(async function(){
+                mw.loader.using(["oojs-ui-core", "oojs-ui-widgets", "oojs-ui-windows", "mediawiki.diff.styles"]).done(function(){
                     var label = JSON.parse(ret.parse.wikitext["*"].split(entityPageSplit)[1]);
 
                     /* ===== WINDOR MANAGER ===== */
@@ -534,6 +534,7 @@
                             labelLowConfidenceCount[facetLabels[f][1]],
                             labelCount[facetLabels[f][1]] - labelLowConfidenceCount[facetLabels[f][1]]
                         ];
+                        var stackBarTotal = 0;
                         var stackBarNames = [
                             facetLabels[f][0],
                             "likely " + facetLabels[f][0],
@@ -547,33 +548,39 @@
                                 var tmp = (k+1).toString();
                                 stackBarText[f] += "A" + tmp + "=" + stackBarCounts[k].toString() + "|C" + tmp + "=" + stackBarColors[k] + "|T" + tmp + "=" + stackBarNames[k] + "|";
                             }
+                            stackBarTotal += stackBarCounts[k];
                         }
-                        stackBarText[f] += "Total=" + (stackBarCounts.reduce((a, b) => a + b, 0)).toString() + "}}";
+                        stackBarText[f] += "Total=" + (stackBarTotal).toString() + "}}";
 
-                        await mwApi.get({
+                        divRender
+                                .append("<h2>" + facetNames[f].charAt(0).toUpperCase() + facetNames[f].slice(1) + "</h2>")
+                                .append("<h3>Label distribution</h3>")
+                                .append("<div id=\"Wikibench-StackBar-" + f + "\"></div>")
+                                .append("<h3>Individual labels</h3>");
+                        for (var j = 0; j < facetLabels[f].length; j++) {
+                            var l = facetLabels[f][j];
+                            divRender.append(individualFieldset[f][l].$element);
+                            individualFieldset[f][l].$element.find(".oo-ui-fieldsetLayout-header").click(function(){
+                                var header = $(this);
+                                var content = header.next();
+                                content.slideToggle(function () {
+                                    header.children(".oo-ui-iconElement-icon").toggleClass("oo-ui-icon-collapse").toggleClass("oo-ui-icon-expand");
+                                });
+                            })
+                        }
+                    }
+
+                    // get and append the stackbars outside the for loop to bypass the await time
+                    // p.s. await is not available in ES5
+                    facets.forEach(function(f) {
+                        mwApi.get({
                             action: "parse",
                             text: stackBarText[f],
                             contentmodel: "wikitext"
                         }).done(function(ret) {
-                            stackBars[f] = ret.parse.text["*"];
-                            divRender
-                                .append("<h2>" + facetNames[f].charAt(0).toUpperCase() + facetNames[f].slice(1) + "</h2>")
-                                .append("<h3>Label distribution</h3>")
-                                .append(stackBars[f])
-                                .append("<h3>Individual labels</h3>");
-                            for (var j = 0; j < facetLabels[f].length; j++) {
-                                var l = facetLabels[f][j];
-                                divRender.append(individualFieldset[f][l].$element);
-                                individualFieldset[f][l].$element.find(".oo-ui-fieldsetLayout-header").click(function(){
-                                    var header = $(this);
-                                    var content = header.next();
-                                    content.slideToggle(function () {
-                                        header.children(".oo-ui-iconElement-icon").toggleClass("oo-ui-icon-collapse").toggleClass("oo-ui-icon-expand");
-                                    });
-                                })
-                            }
+                            $("#Wikibench-StackBar-"+f).append(ret.parse.text["*"]);
                         });
-                    }
+                    });
                 });
             });
         }
