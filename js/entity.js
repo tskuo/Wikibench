@@ -4,8 +4,9 @@
         // init
         var wikibenchURL = "User:Tzusheng/sandbox/Wikipedia:Wikibench/";
         var entityType = "diff";
-        var entityPageSplit = "-----";
         var entityPagePrefix = wikibenchURL + entityType.charAt(0).toUpperCase() + entityType.slice(1) + ":";
+        var entityPageHeader = "{{Warning |heading=Script installation is required for reading and editing |This page is part of the Wikibench project on the English Wikipedia. Please read the [[en:User:Tzusheng/sandbox/Wikipedia:Wikibench/Campaign:Editquality|project page]] and install the script to see this page correctly rendered. Do not edit the source without installing the script.}}";
+        var entityPageSplit = "-----";
         var language = "en";
         var facets = ["editDamage", "userIntent"];
         var facetNames = {
@@ -78,7 +79,7 @@
             });
 
             var setPageWidgets = getPageContent.then(function(ret) {
-                mw.loader.using(["oojs-ui-core", "oojs-ui-widgets", "oojs-ui-windows", "mediawiki.diff.styles"]).done(function(){
+                mw.loader.using(["oojs-ui-core", "oojs-ui-widgets", "oojs-ui-windows", "mediawiki.diff.styles"]).done(async function(){
                     var label = JSON.parse(ret.parse.wikitext["*"].split(entityPageSplit)[1]);
 
                     // Create and append a window manager.
@@ -90,7 +91,8 @@
                         label: "Please do not directly edit source of this page. To update the primary or your label, click the edit buttons. To discuss, visit the talk page."
                     });
 
-                    // Primary label
+                    /* ===== PRIMARY LABEL ===== */
+                    
                     primaryFieldset = new OO.ui.FieldsetLayout({ 
                         label: "Primary label",
                         classes: ["wikibench-entity-primary-label"],
@@ -220,6 +222,7 @@
                             // Create a new process to handle the action
                             return new OO.ui.Process( function () {
                                 var primaryLabels = {}
+                                var summary = this.primaryLabelSummary.getValue();
                                 for (var i = 0; i < facets.length; i++) {
                                     primaryLabels[facets[i]] = this.primaryFacetBtns[facets[i]].findSelectedItem().getData();
                                 }
@@ -240,10 +243,16 @@
                                         submitContent.facets[facets[i]].primaryLabel.touched = "time";
                                         submitContent.facets[facets[i]].primaryLabel.autolabeled = false;
                                     }
-                                    console.log(submitContent);
+                                    mwApi.postWithToken("csrf",{
+                                        action: "edit",
+                                        title: wgPageName,
+                                        section: 0,
+                                        text: entityPageHeader + "\n" + entityPageSplit + "\n" + JSON.stringify(submitContent),
+                                        summary: "Primary label change from the Wikibench entity page: " + summary,
+                                    }).done(function(result,jqXHR) {
+                                        location.reload();
+                                    })
                                 });
-
-                                // location.reload();
                             }, this );
                         }
                         // Fallback to parent handler
@@ -258,11 +267,7 @@
                     windowManager.addWindows( [ editPrimaryDialog ] );
 
                     editPrimaryBtn.on("click", function() {
-                        
-                        // Open the window!   
                         windowManager.openWindow( editPrimaryDialog );
-
-                        console.log("click");
                     });
 
                     primaryFieldset.addItems(
@@ -271,7 +276,7 @@
                         })
                     );
 
-                    // User label
+                    /* ===== USER LABEL ===== */
                     userFieldset = new OO.ui.FieldsetLayout({ 
                         label: "Your label (" + userName + ")",
                         classes: ["wikibench-entity-user-label"]
@@ -321,16 +326,15 @@
                         .append(primaryFieldset.$element)
                         .append(userFieldset.$element);
 
-                    // individual labels
-                    // for (var tmp = 0; tmp < facets.length; tmp++) {
-                    //     console.log(facets.length);
-                    //     console.log(tmp);
-                    //     f = facets[tmp];
-                    facets.forEach(function(f) {
+
+                    /* ===== INDIVIDUAL LABEL ===== */
+                    for (var i = 0; i < facets.length; i++) {
+                        var f = facets[i];
                         individualFieldset[f] = {};
                         var labelCount = {};
                         var labelLowConfidenceCount = {};
-                        facetLabels[f].forEach(function(l) {
+                        for (var j = 0; j < facetLabels[f].length; j++) {
+                            var l = facetLabels[f][j];
                             labelCount[l] = 0;
                             labelLowConfidenceCount[l] = 0;
                             individualFieldset[f][l] = new OO.ui.FieldsetLayout({
@@ -354,7 +358,7 @@
                             });
                             individualFieldset[f][l].setLabel(l + " (" + labelCount[l].toString() + ")");
                             individualFieldset[f][l].$group.toggle(false);
-                        });
+                        }
 
                         // stack bars (assume binary labels)
                         var stackBarCounts = [
@@ -371,15 +375,15 @@
                         ];
                         var stackBarColors = ["#b32424", "#fee7e6", "#d5fdf4", "#14866d"]
                         stackBarText[f] = "{{Stacked bar|height=18px|";
-                        for (var i = 0; i < 4; i++) {
-                            if (stackBarCounts[i] > 0) {
-                                var tmp = (i+1).toString();
-                                stackBarText[f] += "A" + tmp + "=" + stackBarCounts[i].toString() + "|C" + tmp + "=" + stackBarColors[i] + "|T" + tmp + "=" + stackBarNames[i] + "|";
+                        for (var k = 0; k < 4; k++) {
+                            if (stackBarCounts[k] > 0) {
+                                var tmp = (k+1).toString();
+                                stackBarText[f] += "A" + tmp + "=" + stackBarCounts[k].toString() + "|C" + tmp + "=" + stackBarColors[k] + "|T" + tmp + "=" + stackBarNames[k] + "|";
                             }
                         }
                         stackBarText[f] += "Total=" + (stackBarCounts.reduce((a, b) => a + b, 0)).toString() + "}}";
 
-                        mwApi.get({
+                        await mwApi.get({
                             action: "parse",
                             text: stackBarText[f],
                             contentmodel: "wikitext"
@@ -390,7 +394,8 @@
                                 .append("<h3>Label distribution</h3>")
                                 .append(stackBars[f])
                                 .append("<h3>Individual labels</h3>");
-                            facetLabels[f].forEach(function(l) {
+                            for (var j = 0; j < facetLabels[f].length; j++) {
+                                var l = facetLabels[f][j];
                                 divRender.append(individualFieldset[f][l].$element);
                                 individualFieldset[f][l].$element.find(".oo-ui-fieldsetLayout-header").click(function(){
                                     var header = $(this);
@@ -399,10 +404,9 @@
                                         header.children(".oo-ui-iconElement-icon").toggleClass("oo-ui-icon-collapse").toggleClass("oo-ui-icon-expand");
                                     });
                                 })
-                            });
+                            }
                         });
-                    });
-                    // }
+                    }
                 });
             });
         }
