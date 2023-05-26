@@ -35,6 +35,9 @@
             var noticeBox;
             var primaryFieldset;
             var userFieldset;
+            var userLabel = {};
+            var userLowConfidences = {};
+            var userNote = {};
             var individualFieldset = {};
             var stackBars = {};
             var stackBarText = {};
@@ -56,20 +59,20 @@
             var setDiffTable = getDiffContent.then(function(ret) {
                 diffTableContent = ret.compare["*"];
                 diffTableTitle = 
-                `<tr class="diff-title" lang="${language}">
-                    <td colspan="2" class="diff-otitle diff-side-deleted">
-                        <div id="mw-diff-otitle1">
-                            <strong><a href="/w/index.php?oldid=${ret.compare.fromrevid}" title="${ret.compare.fromtitle}">Previous revision</a>
-                        </div>
-                        <div id="mw-diff-otitle5"></div>
-                    </td>
-                    <td colspan="2" class="diff-ntitle diff-side-added">
-                        <div id="mw-diff-ntitle1">
-                            <strong><a href="/w/index.php?oldid=${ret.compare.torevid}" title="${ret.compare.fromtitle}">Edited revision</a>
-                        </div>
-                        <div id="mw-diff-ntitle5"></div>
-                        </td>
-                </tr>`;
+                "<tr class=\"diff-title\" lang=\"" + language + "\">" +
+                    "<td colspan=\"2\" class=\"diff-otitle diff-side-deleted\">" +
+                        "<div id=\"mw-diff-otitle1\">" + 
+                            "<strong><a href=\"/w/index.php?oldid=" + ret.compare.fromrevid + "\" title=\"" + ret.compare.fromtitle + "\">Previous revision</a>" +
+                        "</div>" +
+                        "<div id=\"mw-diff-otitle5\"></div>" +
+                    "</td>" +
+                    "<td colspan=\"2\" class=\"diff-ntitle diff-side-added\">" +
+                        "<div id=\"mw-diff-ntitle1\">" +
+                            "<strong><a href=\"/w/index.php?oldid=" + ret.compare.torevid + "\" title=\"" + ret.compare.fromtitle + "\">Edited revision</a>" +
+                        "</div>" +
+                        "<div id=\"mw-diff-ntitle5\"></div>" +
+                        "</td>" +
+                "</tr>";
             });
 
             var getPageContent = mwApi.get({
@@ -82,7 +85,7 @@
                 mw.loader.using(["oojs-ui-core", "oojs-ui-widgets", "oojs-ui-windows", "mediawiki.diff.styles"]).done(async function(){
                     var label = JSON.parse(ret.parse.wikitext["*"].split(entityPageSplit)[1]);
 
-                    // Create and append a window manager.
+                    /* ===== WINDOR MANAGER ===== */
                     windowManager = new OO.ui.WindowManager();
                     $(document.body).append(windowManager.$element);
 
@@ -98,7 +101,8 @@
                         classes: ["wikibench-entity-primary-label"],
                     });
 
-                    facets.forEach(function(f) {
+                    for (var i = 0; i < facets.length; i++) {
+                        var f = facets[i];
                         var facetPrimaryLabel = new OO.ui.LabelWidget({
                             label: label.facets[f].primaryLabel.label
                         });
@@ -108,7 +112,7 @@
                                 align: "left"
                             })
                         )
-                    });
+                    }
 
                     primaryFieldset.addItems([
                         new OO.ui.FieldLayout(
@@ -136,15 +140,15 @@
                     });
 
                     // Make a subclass of ProcessDialog for editing the primary label
-                    function MyDialog( config ) {
-                        MyDialog.super.call( this, config );
+                    function EditPrimaryDialog( config ) {
+                        EditPrimaryDialog.super.call( this, config );
                     }
-                    OO.inheritClass( MyDialog, OO.ui.ProcessDialog );
+                    OO.inheritClass( EditPrimaryDialog, OO.ui.ProcessDialog );
 
                     // Specify a name for .addWindows()
-                    MyDialog.static.name = "editPrimaryDialog";
-                    MyDialog.static.title = "Edit primary label";
-                    MyDialog.static.actions = [
+                    EditPrimaryDialog.static.name = "editPrimaryDialog";
+                    EditPrimaryDialog.static.title = "Edit primary label";
+                    EditPrimaryDialog.static.actions = [
                         { 
                             flags: [ "primary", "progressive" ], 
                             label: "Publish changes", 
@@ -157,8 +161,8 @@
                     ];
 
                     // Customize the initialize() function to add content and layouts: 
-                    MyDialog.prototype.initialize = function () {
-                        MyDialog.super.prototype.initialize.call( this );
+                    EditPrimaryDialog.prototype.initialize = function () {
+                        EditPrimaryDialog.super.prototype.initialize.call( this );
                         this.panel = new OO.ui.PanelLayout( { 
                             padded: true, 
                             expanded: false 
@@ -212,12 +216,12 @@
                         this.$body.append( this.panel.$element );
                     };
 
-                    MyDialog.prototype.getBodyHeight = function () {
+                    EditPrimaryDialog.prototype.getBodyHeight = function () {
                         return this.panel.$element.outerHeight( true );
                     };
 
                     // Specify processes to handle the actions.
-                    MyDialog.prototype.getActionProcess = function ( action ) {
+                    EditPrimaryDialog.prototype.getActionProcess = function ( action ) {
                         if ( action === "publish" ) {
                             // Create a new process to handle the action
                             return new OO.ui.Process( function () {
@@ -251,17 +255,17 @@
                                         summary: "Primary label change from the Wikibench entity page: " + summary,
                                     }).done(function(result,jqXHR) {
                                         location.reload();
-                                    })
+                                    });
                                 });
                             }, this );
                         }
                         // Fallback to parent handler
-                        return MyDialog.super.prototype.getActionProcess.call( this, action );
+                        return EditPrimaryDialog.super.prototype.getActionProcess.call( this, action );
                     };
 
 
                     // Create a new process dialog window.
-                    var editPrimaryDialog = new MyDialog();
+                    var editPrimaryDialog = new EditPrimaryDialog();
 
                     // Add the window to window manager using the addWindows() method.
                     windowManager.addWindows( [ editPrimaryDialog ] );
@@ -282,30 +286,193 @@
                         classes: ["wikibench-entity-user-label"]
                     });
 
-                    facets.forEach(function(f) {
-                        var userLabel = "N/A";
+                    for (var i = 0; i < facets.length; i++) {
+                        var f = facets[i];
+                        userLabel[f] = undefined;
+                        userNote[f] = "";
+                        var displayLabelName = "undefined";
                         label.facets[f].individualLabels.forEach(function(l) {
                             if (userName === l.userName) {
-                                userLabel = l.label;
-                                userNote = l.note;
+                                userLabel[f] = l.label;
+                                userLowConfidences[f] = l.lowConfidence;
+                                userNote[f] = l.note;
+                                displayLabelName = l.label
                                 if (l.lowConfidence) {
-                                    userLabel += " (low confidence)";
+                                    displayLabelName = "likely " + displayLabelName;
                                 }
                             }
                         });
                         userFieldset.addItems(
                             new OO.ui.FieldLayout(
                                 new OO.ui.LabelWidget({
-                                    label: userLabel
+                                    label: displayLabelName
                                 }), {
                                     label: facetNames[f].charAt(0).toUpperCase() + facetNames[f].slice(1),
                                     align: "left" 
                             })
                         );
-                    });
+                    }
 
                     var editUserBtn = new OO.ui.ButtonWidget({
                         label: "Edit"
+                    });
+
+                    // Make a subclass of Process Dialog for editing the user label
+                    function EditUserLabelDialog(config) {
+                        EditUserLabelDialog.super.call(this, config);
+                    }
+                    OO.inheritClass(EditUserLabelDialog, OO.ui.ProcessDialog);
+
+                    EditUserLabelDialog.static.name = "editUserLabelDialog";
+                    EditUserLabelDialog.static.title = "Edit your label";
+                    EditUserLabelDialog.static.actions = [
+                        {
+                            flags: ["primary", "progressive"],
+                            label: "Publish changes",
+                            action: "publish"
+                        },
+                        {
+                            flags: "safe",
+                            label: "Cancel"
+                        }
+                    ];
+
+                    EditUserLabelDialog.prototype.initialize = function() {
+                        EditUserLabelDialog.super.prototype.initialize.call(this);
+                        this.panel = new OO.ui.PanelLayout({
+                            padded: true,
+                            expanded: false
+                        });
+                        this.content = new OO.ui.FieldsetLayout();
+                        this.userFacetBtns = {};
+                        this.userFacetLowConfidenceCheckboxes = {};
+                        this.userFacetNoteInputs = {};
+                        for (var i = 0; i < facets.length; i++) {
+                            var f = facets[i];
+                            this.userFacetBtns[f] = new OO.ui.ButtonSelectWidget({
+                                items: [
+                                    new OO.ui.ButtonOptionWidget({
+                                        data: facetLabels[f][0],
+                                        label: facetLabels[f][0],
+                                        icon: facetIcons[f][0]
+                                    }),
+                                    new OO.ui.ButtonOptionWidget({
+                                        data: facetLabels[f][1],
+                                        label: facetLabels[f][1],
+                                        icon: facetIcons[f][1]
+                                    })
+                                ]
+                            });
+                            if (userLabel[f] !== undefined) {
+                                this.userFacetBtns[f].selectItemByLabel(userLabel[f]);
+                            }
+                            this.userFacetLowConfidenceCheckboxes[f] = new OO.ui.CheckboxInputWidget();
+                            if (userLowConfidences[f] === true) {
+                                this.userFacetLowConfidenceCheckboxes[f].setSelected(true);
+                            }
+                            this.userFacetNoteInputs[f] = new OO.ui.TextInputWidget({
+                                value: userNote[f]
+                            })
+                            this.content.addItems([
+                                new OO.ui.FieldLayout(this.userFacetBtns[f], {
+                                    label: facetNames[f].charAt(0).toUpperCase() + facetNames[f].slice(1),
+                                    align: "left"
+                                }),
+                                new OO.ui.FieldLayout(new OO.ui.Widget({
+                                    content: [
+                                        new OO.ui.HorizontalLayout({
+                                            items: [
+                                                this.userFacetLowConfidenceCheckboxes[f],
+                                                new OO.ui.LabelWidget({label: "low confidence"})
+                                            ]
+                                        })
+                                    ]
+                                }), {
+                                    label: " ",
+                                    align: "left"
+                                }),
+                                new OO.ui.FieldLayout(this.userFacetNoteInputs[f], {
+                                    label: "Note for " + facetNames[f],
+                                    align: "left"
+                                })
+                            ])
+                        }
+
+                        this.panel.$element.append(this.content.$element);
+                        this.$body.append(this.panel.$element);
+                    }
+
+                    EditUserLabelDialog.prototype.getBodyHeight = function() {
+                        return this.panel.$element.outerHeight(true);
+                    }
+
+                    EditUserLabelDialog.prototype.getActionProcess = function(action) {
+                        if ( action === "publish" ) {
+                            // Create a new process to handle the action
+                            return new OO.ui.Process( function () {
+                                var tmpUserLabel = {};
+                                var tmpUserLowConfidences = {};
+                                var tmpUserNote = {};
+                                for (var i = 0; i < facets.length; i++) {
+                                    tmpUserLabel[facets[i]] = this.userFacetBtns[facets[i]].findSelectedItem().getData();
+                                    tmpUserLowConfidences[facets[i]] = this.userFacetLowConfidenceCheckboxes[facets[i]].isSelected();
+                                    tmpUserNote[facets[i]] = this.userFacetNoteInputs[facets[i]].getValue();
+                                }
+                                mwApi.get({
+                                    action: "query",
+                                    prop: "revisions",
+                                    rvprop: "content",
+                                    titles: wgPageName,
+                                    format: "json"
+                                }).done(function(ret) {
+                                    var revisions = ret.query.pages;
+                                    var pageId = Object.keys(revisions)[0];
+                                    var submitContent = JSON.parse(revisions[pageId].revisions[0]["*"].split(entityPageSplit)[1]);
+                                    for (var i = 0; i < facets.length; i++) {
+                                        var isUserLabelExist = false;
+                                        var f = facets[i];
+                                        var submitLabel = {
+                                            "userName": userName,
+                                            "userId": userId,
+                                            "label": tmpUserLabel[f],
+                                            "note": tmpUserNote[f],
+                                            "origin": "wikibench-enwiki-entity-page",
+                                            "created": "time1",
+                                            "touched": "time2",
+                                            "lowConfidence": tmpUserLowConfidences[f],
+                                            "category": []
+                                        }
+                                        for (var j = 0; j < submitContent.facets[f].individualLabels.length; j++) {
+                                            if (submitContent.facets[f].individualLabels[j].userName === userName) {
+                                                submitLabel.created = submitContent.facets[f].individualLabels[j].created;
+                                                submitContent.facets[f].individualLabels[j] = submitLabel;
+                                                isUserLabelExist = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!isUserLabelExist) {
+                                            submitContent.facets[f].individualLabels.push(submitLabel);
+                                        }
+                                    }
+                                    mwApi.postWithToken("csrf",{
+                                        action: "edit",
+                                        title: wgPageName,
+                                        section: 0,
+                                        text: entityPageHeader + "\n" + entityPageSplit + "\n" + JSON.stringify(submitContent),
+                                        summary: "Individual label change from the Wikibench entity page",
+                                    }).done(function(result,jqXHR) {
+                                        location.reload();
+                                    })
+                                });;
+                            }, this );
+                        }
+                        // Fallback to parent handler
+                        return EditUserLabelDialog.super.prototype.getActionProcess.call( this, action );
+                    }
+                    var editUserLabelDialog = new EditUserLabelDialog();
+                    windowManager.addWindows([editUserLabelDialog]);
+                    editUserBtn.on("click", function() {
+                        windowManager.openWindow(editUserLabelDialog);
                     });
 
                     userFieldset.addItems([

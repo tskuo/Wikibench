@@ -341,7 +341,7 @@
                                 title: entityPageTitle,
                                 section: 0,
                                 text: entityPageHeader + "\n" + entityPageSplit + "\n" + JSON.stringify(submitContent),
-                                summary: "label submission from the Wikibench diff plug-in",
+                                summary: "Label submission from the Wikibench diff plug-in",
                             }).done(function(result,jqXHR){
 
                                 var isSameAsPrimary = true;
