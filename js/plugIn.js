@@ -15,16 +15,16 @@
                 editDamage: "The edit damage label indicates whether this edit causes damage to the article or not. The optional checkbox on the right lets you specify that you provide the label with lower confidence when you're not so sure.",
                 userIntent: "The user intent label indicates whether the edit was saved in good or bad faith. The optional checkbox on the right lets you specify that you provide the label with lower confidence when you're not so sure."
             };
-            var labels = {
+            var facetLabels = {
                 editDamage: ["damaging", "not damaging"],
                 userIntent: ["bad faith", "good faith"]
             };
-            var labelIcons = {
+            var facetIcons = {
                 editDamage: ["alert", "success"],
                 userIntent: ["alert", "heart"]
             }
-            var successMessage = "Your submission has been recorded.";
-            var warningMessage = "Your submission has been recorded but is different from the primary label ";
+            var successMessage = "Your submission has been recorded";
+            var warningMessage = "Your submission has been recorded but is different from the primary label";
             
             // get config
             var mwApi = new mw.Api();
@@ -37,13 +37,11 @@
             var routingMessage = "You are welcome to review other Wikipedians' labels on the <a href=\"/wiki/" + entityPageTitle + "\">entity page of this " + entityType + "</a> or close this message for resubmission.";
 
             // labels
-            var entityLabels = {};
             var primaryLabels = {};
             var autolabeled = {};
             var userLabels = {};
             var userLowConfidences = {};
             var userNotes = {};
-            var otherIndividualLabelCount = 0;
 
             // widgets
             var facetBtns = {};
@@ -53,9 +51,7 @@
             var submitBtn;
             var submitMessage;
 
-
-            // ajax call
-            var getEntityPage = mwApi.get({
+            var getEntityPage = mwApi.get({ // get the entity page. if it doesn't exist, return revisionId = "-1"
                 action: "query",
                 prop: "revisions",
                 rvprop: "content",
@@ -63,336 +59,307 @@
                 format: "json"
             });
 
-            var parseExistingLabels = getEntityPage.then(function(ret) {
+            var parseEntityPage = getEntityPage.then(function(ret) {
                 revisionId = Object.keys(ret.query.pages)[0];
-                
-                if (revisionId === "-1") { // page don't exist
-                    console.log("DEBUG: page doesn't exist");
-
-                }
-                else { // page exist already
-                    console.log("DEBUG: page already exists");
-                    
+                if (revisionId !== "-1") { // the entity page already exists                    
                     var revisions = ret.query.pages;
                     var pageId = Object.keys(revisions)[0];
-                    entityLabels = JSON.parse(revisions[pageId].revisions[0]["*"].split(entityPageSplit)[1]);
-
+                    var entityPageContent = JSON.parse(revisions[pageId].revisions[0]["*"].split(entityPageSplit)[1]);
                     facets.forEach(function(f) {
-                        primaryLabels[f] = entityLabels.facets[f].primaryLabel.label;
-                        autolabeled[f] = entityLabels.facets[f].primaryLabel.autolabeled;
-                        entityLabels.facets[f].individualLabels.forEach(function(i) {
-                            if (userName === i.userName) {
-                                userLabels[f] = i.label;
-                                userLowConfidences[f] = i.lowConfidence;
-                                userNotes[f] = i.note;
-                            }
-                            else {
-                                otherIndividualLabelCount += 1;
+                        primaryLabels[f] = entityPageContent.facets[f].primaryLabel.label;
+                        autolabeled[f] = entityPageContent.facets[f].primaryLabel.autolabeled;
+                        entityPageContent.facets[f].individualLabels.forEach(function(l) {
+                            if (userName === l.userName) {
+                                userLabels[f] = l.label;
+                                userLowConfidences[f] = l.lowConfidence;
+                                userNotes[f] = l.note;
                             }
                         });
                     });
-                    otherIndividualLabelCount /= Math.ceil(facets.length);
                 }
             });
 
-            var renderWikibenchPlugIn = parseExistingLabels.then(function() {
-                mw.loader.using(["oojs-ui-core", "oojs-ui-widgets", "oojs-ui-windows"]);
-
-                facets.forEach(function(f) {
-                    facetBtns[f] = new OO.ui.ButtonSelectWidget({
-                        items: [
-                            new OO.ui.ButtonOptionWidget({
-                                data: labels[f][0],
-                                label: labels[f][0],
-                                icon: labelIcons[f][0]
-                            }),
-                            new OO.ui.ButtonOptionWidget({
-                                data: labels[f][1],
-                                label: labels[f][1],
-                                icon: labelIcons[f][1]
-                            })
-                        ]
-                    });
-                    
-                    if (!$.isEmptyObject(userLabels)) {
-                        facetBtns[f].selectItemByLabel(userLabels[f]);
-                    }
-
-                    facetBtns[f].on("choose", function(item){
-                        userLabels[f] = item.getData();
-                    });
-
-                    facetLowConfidenceCheckboxes[f] = new OO.ui.CheckboxInputWidget();
-
-                    if (!$.isEmptyObject(userLowConfidences[f])) {
-                        facetLowConfidenceCheckboxes[f].setSelected(userLowConfidences[f]);
-                    }
-
-                    facetWidgets[f] = new OO.ui.Widget({
-                        content: [
-                            new OO.ui.HorizontalLayout({
-                                items: [
-                                    facetBtns[f],
-                                    facetLowConfidenceCheckboxes[f],
-                                    new OO.ui.LabelWidget({label: "low confidence"})
-                                ]
-                            })
-                        ]
-                    });
-
-                    facetNoteInputs[f] = new OO.ui.TextInputWidget({
-                        // placeholder:
-                    })
-
-                    if (!$.isEmptyObject(userNotes)){
-                        facetNoteInputs[f].setValue(userNotes[f]);
-                    }
-                });
-
-                // var noteInput = new OO.ui.MultilineTextInputWidget({
-                //     placeholder: "Add a note to your label",
-                //     rows: 2
-                // });
-
-                submitBtn = new OO.ui.ButtonWidget({
-                    label: "Submit",
-                    flags: ["primary", "progressive"]
-                });
-
-                submitMessage = new OO.ui.MessageWidget({
-                    showClose: true
-                });
-
-                submitMessage.toggle(false);
-
-                var fieldset = new OO.ui.FieldsetLayout({ 
-                    label: "Wikibench Plug-In",
-                    id: "wikibench-diff-plugin"
-                });
-
-                // if user label already exists
-                if (!$.isEmptyObject(userLabels)) {
-
-                    var isSameAsPrimary = true;
-                    if (!$.isEmptyObject(primaryLabels)) { // primary label already exist
-                        facets.forEach(function(f) {
-                            if (userLabels[f] !== primaryLabels[f]) {
-                                isSameAsPrimary = false;
-                            }
-                        });
-                    }
-
-                    if (isSameAsPrimary) {
-                        submitMessage.setType("success");
-                        submitMessage.setLabel(new OO.ui.HtmlSnippet("<strong>" + successMessage + "</strong>" + "<br>" + routingMessage));
-                    }
-                    else {
-                        var primaryLabelMessage = "("
-                        facets.forEach(function(f) {
-                            primaryLabelMessage += primaryLabels[f];
-                            primaryLabelMessage += ", ";
-                        });
-                        primaryLabelMessage = primaryLabelMessage.slice(0,-2) + ")";
-                        submitMessage.setType("warning");
-                        submitMessage.setLabel(new OO.ui.HtmlSnippet("<strong>" + warningMessage + primaryLabelMessage + ".</strong>" + "<br>" + routingMessage));
-                    }
-                    submitMessage.toggle(true);
-                    submitBtn.setDisabled(true);
-                    submitBtn.toggle(false);
-
-
-                    // fieldset.addItems(
-                    //     new OO.ui.MessageWidget({
-                    //         type: "notice",
-                    //         showClose: true,
-                    //         label: new OO.ui.HtmlSnippet("<strong>You have previously provided labels for this edit.</strong><br>If you wish to make changes to your previous submission, you may update it below and resubmit.")
-                    //     })
-                    // );
-                }
-
-                fieldset.addItems(
-                    new OO.ui.FieldLayout(
-                        new OO.ui.LabelWidget({label: diffNewId.toString()}), {
-                        label: "Diff new ID",
-                        align: "left"
-                        // help: "Revision ID of the new revision on the right when viewing a diff."
-                    })
-                );
-
-                facets.forEach(function(f) {
-                    fieldset.addItems(
-                        new OO.ui.FieldLayout(facetWidgets[f], {
-                            label: facetNames[f].charAt(0).toUpperCase() + facetNames[f].slice(1),
-                            align: "left",
-                            help: facetHelp[f]
-                        })
-                    );
-                });
-
-                facets.forEach(function(f) {
-                    fieldset.addItems(
-                        new OO.ui.FieldLayout(facetNoteInputs[f], {
-                            label: "Note for " + facetNames[f],
-                            align: "left",
-                            help: "An optional note that explains the labels you provide and, in case of low confidence, why so."
-                        })
-                    );
-                });
-
-                fieldset.addItems([
-                    new OO.ui.FieldLayout(submitBtn, {}),
-                    new OO.ui.FieldLayout(submitMessage, {})
-                ]);
-
-
-                $("#contentSub").append(fieldset.$element);
-
-                submitBtn.on("click", function() {
-
-                    // labels and user login are required for submission
-                    var isLabelUndefined = false;
+            var renderPlugIn = parseEntityPage.then(function() {
+                mw.loader.using(["oojs-ui-core", "oojs-ui-widgets", "oojs-ui-windows"]).done(function(){
                     facets.forEach(function(f) {
-                        if (userLabels[f] === undefined) {
-                            isLabelUndefined = true;
+                        facetBtns[f] = new OO.ui.ButtonSelectWidget({
+                            items: [
+                                new OO.ui.ButtonOptionWidget({
+                                    data: facetLabels[f][0],
+                                    label: facetLabels[f][0],
+                                    icon: facetIcons[f][0]
+                                }),
+                                new OO.ui.ButtonOptionWidget({
+                                    data: facetLabels[f][1],
+                                    label: facetLabels[f][1],
+                                    icon: facetIcons[f][1]
+                                })
+                            ]
+                        });
+                        
+                        if (!$.isEmptyObject(userLabels)) {
+                            facetBtns[f].selectItemByLabel(userLabels[f]);
+                        }
+
+                        facetBtns[f].on("choose", function(item){
+                            userLabels[f] = item.getData();
+                        });
+
+                        facetLowConfidenceCheckboxes[f] = new OO.ui.CheckboxInputWidget();
+
+                        if (!$.isEmptyObject(userLowConfidences[f])) {
+                            facetLowConfidenceCheckboxes[f].setSelected(userLowConfidences[f]);
+                        }
+
+                        facetWidgets[f] = new OO.ui.Widget({
+                            content: [
+                                new OO.ui.HorizontalLayout({
+                                    items: [
+                                        facetBtns[f],
+                                        facetLowConfidenceCheckboxes[f],
+                                        new OO.ui.LabelWidget({label: "low confidence"})
+                                    ]
+                                })
+                            ]
+                        });
+
+                        facetNoteInputs[f] = new OO.ui.TextInputWidget({});
+
+                        if (!$.isEmptyObject(userNotes)){
+                            facetNoteInputs[f].setValue(userNotes[f]);
                         }
                     });
-                    if (isLabelUndefined) { 
-                        OO.ui.alert("Labels are required for submission.");
-                    }
-                    else if (userName === null){
-                        OO.ui.alert("User login is required for submission.");
-                    }
-                    else {
 
-                        // TODO: consider auto label here
+                    submitBtn = new OO.ui.ButtonWidget({
+                        label: "Submit",
+                        flags: ["primary", "progressive"]
+                    });
 
-                        mwApi.get({
-                            action: "query",
-                            prop: "revisions",
-                            rvprop: "content",
-                            titles: entityPageTitle,
-                            format: "json"
-                        }).done(function(ret) {
+                    submitMessage = new OO.ui.MessageWidget({
+                        showClose: true
+                    });
 
-                            // get primary label again
-
-                            console.log("get revision ID again:")
-                            console.log(Object.keys(ret.query.pages)[0]);
-
-                            var submitLabels = {};
-                            var submitContent;
-                            facets.forEach(function(f) {
-                                submitLabels[f] = {
-                                    "userName": userName,
-                                    "userId": userId,
-                                    "label": userLabels[f],
-                                    "note": facetNoteInputs[f].getValue(),
-                                    "origin": "wikibench-enwiki-diff-plugin",
-                                    "created": "time1",
-                                    "touched": "time2",
-                                    "lowConfidence": facetLowConfidenceCheckboxes[f].isSelected(),
-                                    "category": []
-                                }
-                            });
-
-                            if (Object.keys(ret.query.pages)[0] === "-1") { // page doesn't exist
-                                console.log("page doesn't exist");
-                                submitContent = {
-                                    "entityType": entityType,
-                                    "entityId": diffNewId,
-                                    "facets": {}
-                                }
-                                facets.forEach(function(f) {
-                                    submitContent.facets[f] = {};
-                                    submitContent.facets[f]["primaryLabel"] = {
-                                        "lastModifier": userName,
-                                        "lastModifierId": userId,
-                                        "label": userLabels[f],
-                                        "touched": submitLabels[f].touched,
-                                        "autolabeled": false
-                                    };
-                                    submitContent.facets[f]["individualLabels"] = [submitLabels[f]];  
-                                });
-                            }
-                            else {
-                                console.log("page already exists");
-                                var revisions = ret.query.pages;
-                                var pageId = Object.keys(revisions)[0];
-                                submitContent = JSON.parse(revisions[pageId].revisions[0]["*"].split(entityPageSplit)[1]);
-                                facets.forEach(function(f) {
-                                    var isUserLabelExist = false;
-                                    for (var l in submitContent.facets[f].individualLabels) {
-                                        if (submitContent.facets[f].individualLabels[l].userName === userName) {
-                                            submitLabels[f].created = submitContent.facets[f].individualLabels[l].created;
-                                            submitContent.facets[f].individualLabels[l] = submitLabels[f];
-                                            isUserLabelExist = true;
-                                            break;
-                                        }
-                                    }
-                                    if (!isUserLabelExist) {
-                                        submitContent.facets[f].individualLabels.push(submitLabels[f]);
-                                    }
-                                    primaryLabels[f] = submitContent.facets[f].primaryLabel.label; // get primary label again in case someone updates it in between
-                                });
-                            }
-
-                            mwApi.postWithToken("csrf",{
-                                action: "edit",
-                                title: entityPageTitle,
-                                section: 0,
-                                text: entityPageHeader + "\n" + entityPageSplit + "\n" + JSON.stringify(submitContent),
-                                summary: "Label submission from the Wikibench diff plug-in",
-                            }).done(function(result,jqXHR){
-
-                                var isSameAsPrimary = true;
-                                if (!$.isEmptyObject(primaryLabels)) { // primary label already exist
-                                    facets.forEach(function(f) {
-                                        if (userLabels[f] !== primaryLabels[f]) {
-                                            isSameAsPrimary = false;
-                                        }
-                                    });
-                                }
-
-                                if (isSameAsPrimary) {
-                                    submitMessage.setType("success");
-                                    submitMessage.setLabel(new OO.ui.HtmlSnippet("<strong>" + successMessage + "</strong>" + "<br>" + routingMessage));
-                                }
-                                else {
-                                    var primaryLabelMessage = "("
-                                    facets.forEach(function(f) {
-                                        primaryLabelMessage += primaryLabels[f];
-                                        primaryLabelMessage += ", ";
-                                    });
-                                    primaryLabelMessage = primaryLabelMessage.slice(0,-2) + ")";
-                                    submitMessage.setType("warning");
-                                    submitMessage.setLabel(new OO.ui.HtmlSnippet("<strong>" + warningMessage + primaryLabelMessage + ".</strong>" + "<br>" + routingMessage));
-                                }
-                                submitMessage.toggle(true);
-                                submitBtn.setDisabled(true);
-                                submitBtn.toggle(false);
-
-                            }).fail(function(code,result){
-                                if ( code === "http" ) {
-                                    mw.log( "HTTP error: " + result.textStatus ); // result.xhr contains the jqXHR object
-                                } else if ( code === "ok-but-empty" ) {
-                                    mw.log( "Got an empty response from the server" );
-                                } else {
-                                    mw.log( "API error: " + code );
-                                }
-                            });
-                        }); 
-                    }
-                });
-
-                submitMessage.on("close", function() {
                     submitMessage.toggle(false);
-                    submitBtn.setDisabled(false);
-                    submitBtn.toggle(true);
-                });
 
+                    var fieldset = new OO.ui.FieldsetLayout({ 
+                        label: "Wikibench Plug-In",
+                        id: "wikibench-diff-plugin"
+                    });
+
+                    // if user label already exists, compare it with the primary label and update submitMessage accordingly
+                    if (!$.isEmptyObject(userLabels)) {
+                        var isSameAsPrimary = true;
+                        if (!$.isEmptyObject(primaryLabels)) { // make sure the primary label exist
+                            facets.forEach(function(f) {
+                                if (userLabels[f] !== primaryLabels[f]) {
+                                    isSameAsPrimary = false;
+                                }
+                            });
+                        }
+                        if (isSameAsPrimary) {
+                            submitMessage.setType("success");
+                            submitMessage.setLabel(new OO.ui.HtmlSnippet("<strong>" + successMessage + "</strong>" + "<br>" + routingMessage));
+                        }
+                        else {
+                            var primaryLabelMessage = "("
+                            for (var i = 0; i < facets.length; i++) {
+                                primaryLabelMessage += primaryLabels[facets[i]];
+                                primaryLabelMessage += ", ";
+                            }
+                            primaryLabelMessage = primaryLabelMessage.slice(0,-2) + ")";
+                            submitMessage.setType("warning");
+                            submitMessage.setLabel(new OO.ui.HtmlSnippet("<strong>" + warningMessage + " " + primaryLabelMessage + "</strong>" + "<br>" + routingMessage));
+                        }
+                        submitMessage.toggle(true);
+                        submitBtn.setDisabled(true);
+                        submitBtn.toggle(false);
+                    }
+
+                    // add all the widgets to feildset
+                    fieldset.addItems(
+                        new OO.ui.FieldLayout(
+                            new OO.ui.LabelWidget({label: diffNewId.toString()}), {
+                            label: "Diff new ID",
+                            align: "left"
+                        })
+                    );
+
+                    for (var i = 0; i < facets.length; i++) {
+                        fieldset.addItems(
+                            new OO.ui.FieldLayout(facetWidgets[facets[i]], {
+                                label: facetNames[facets[i]].charAt(0).toUpperCase() + facetNames[facets[i]].slice(1),
+                                align: "left",
+                                help: facetHelp[facets[i]]
+                            })
+                        );
+                    }
+
+                    for (var i = 0; i < facets.length; i++) {
+                        fieldset.addItems(
+                            new OO.ui.FieldLayout(facetNoteInputs[facets[i]], {
+                                label: "Note for " + facetNames[facets[i]].toLowerCase(),
+                                align: "left",
+                                help: "An optional note that explains the labels you provide and, in case of low confidence, why so."
+                            })
+                        );
+                    }
+
+                    fieldset.addItems([
+                        new OO.ui.FieldLayout(submitBtn, {}),
+                        new OO.ui.FieldLayout(submitMessage, {})
+                    ]);
+
+                    $("#mw-oldid").after(fieldset.$element);
+
+                    submitBtn.on("click", function() {
+
+                        // labels and user login are required for submission
+                        var isLabelUndefined = false;
+                        facets.forEach(function(f) {
+                            if (userLabels[f] === undefined) {
+                                isLabelUndefined = true;
+                            }
+                        });
+                        if (isLabelUndefined) { 
+                            OO.ui.alert("Labels are required for submission.");
+                        }
+                        else if (userName === null){
+                            OO.ui.alert("User login is required for submission.");
+                        }
+                        else {
+
+                            // TODO: consider autolabel here
+
+                            mwApi.get({ // get primary label again in case there are any changes from others
+                                action: "query",
+                                prop: "revisions",
+                                rvprop: "content",
+                                titles: entityPageTitle,
+                                format: "json"
+                            }).done(function(ret) {
+                                var submitLabels = {};
+                                var submitContent;
+                                facets.forEach(function(f) {
+                                    submitLabels[f] = {
+                                        "userName": userName,
+                                        "userId": userId,
+                                        "label": userLabels[f],
+                                        "note": facetNoteInputs[f].getValue(),
+                                        "origin": "wikibench-enwiki-diff-plugin",
+                                        "created": "time1",
+                                        "touched": "time2",
+                                        "lowConfidence": facetLowConfidenceCheckboxes[f].isSelected(),
+                                        "category": []
+                                    }
+                                });
+                                if (Object.keys(ret.query.pages)[0] === "-1") { // entity page doesn't exist
+                                    submitContent = {
+                                        "entityType": entityType,
+                                        "entityId": diffNewId,
+                                        "facets": {}
+                                    }
+                                    facets.forEach(function(f) {
+                                        submitContent.facets[f] = {};
+                                        submitContent.facets[f]["primaryLabel"] = {
+                                            "lastModifier": userName,
+                                            "lastModifierId": userId,
+                                            "label": userLabels[f],
+                                            "touched": submitLabels[f].touched,
+                                            "autolabeled": false
+                                        };
+                                        submitContent.facets[f]["individualLabels"] = [submitLabels[f]];  
+                                    });
+                                }
+                                else { // entity page already exists
+                                    var revisions = ret.query.pages;
+                                    var pageId = Object.keys(revisions)[0];
+                                    submitContent = JSON.parse(revisions[pageId].revisions[0]["*"].split(entityPageSplit)[1]);
+                                    for (var i = 0; i < facets.length; i++) {
+                                        var f = facets[i];
+                                        var isUserLabelExist = false;
+                                        primaryLabels[f] = submitContent.facets[f].primaryLabel.label; // get primary label again in case someone updates it in between
+                                        for (var j = 0; j < submitContent.facets[f].individualLabels.length; j++) {
+                                            if (submitContent.facets[f].individualLabels[j].userName === userName) {
+                                                submitLabels[f].created = submitContent.facets[f].individualLabels[j].created;
+                                                submitContent.facets[f].individualLabels[j] = submitLabels[f];
+                                                isUserLabelExist = true;
+                                                break;
+                                            }
+                                        }
+                                        if (isUserLabelExist && (submitContent.facets[f].individualLabels.length === 1) && (submitContent.facets[f].primaryLabel.lastModifier === userName)) {
+                                            // allow changing the primary label from the plug-in if the user is the only laber submitter
+                                            submitContent.facets[f]["primaryLabel"] = {
+                                                "lastModifier": userName,
+                                                "lastModifierId": userId,
+                                                "label": userLabels[f],
+                                                "touched": submitLabels[f].touched,
+                                                "autolabeled": false
+                                            };
+                                            primaryLabels[f] = submitContent.facets[f]["primaryLabel"].label; // update primary label for submitMessage
+                                        }
+                                        if (!isUserLabelExist) {
+                                            submitContent.facets[f]["individualLabels"].push(submitLabels[f]);
+                                        }
+                                    }
+                                }
+
+                                mwApi.postWithToken("csrf",{
+                                    action: "edit",
+                                    title: entityPageTitle,
+                                    section: 0,
+                                    text: entityPageHeader + "\n" + entityPageSplit + "\n" + JSON.stringify(submitContent),
+                                    summary: "Label submission from the Wikibench diff plug-in",
+                                }).done(function(result,jqXHR){
+
+                                    var isSameAsPrimary = true;
+                                    if (!$.isEmptyObject(primaryLabels)) { // primary label already exist
+                                        facets.forEach(function(f) {
+                                            if (userLabels[f] !== primaryLabels[f]) {
+                                                isSameAsPrimary = false;
+                                            }
+                                        });
+                                    }
+
+                                    if (isSameAsPrimary) {
+                                        submitMessage.setType("success");
+                                        submitMessage.setLabel(new OO.ui.HtmlSnippet("<strong>" + successMessage + "</strong>" + "<br>" + routingMessage));
+                                    }
+                                    else {
+                                        var primaryLabelMessage = "("
+                                        facets.forEach(function(f) {
+                                            primaryLabelMessage += primaryLabels[f];
+                                            primaryLabelMessage += ", ";
+                                        });
+                                        primaryLabelMessage = primaryLabelMessage.slice(0,-2) + ")";
+                                        submitMessage.setType("warning");
+                                        submitMessage.setLabel(new OO.ui.HtmlSnippet("<strong>" + warningMessage + " " + primaryLabelMessage + "</strong>" + "<br>" + routingMessage));
+                                    }
+                                    submitMessage.toggle(true);
+                                    submitBtn.setDisabled(true);
+                                    submitBtn.toggle(false);
+
+                                }).fail(function(code,result){
+                                    if ( code === "http" ) {
+                                        mw.log( "HTTP error: " + result.textStatus ); // result.xhr contains the jqXHR object
+                                    } else if ( code === "ok-but-empty" ) {
+                                        mw.log( "Got an empty response from the server" );
+                                    } else {
+                                        mw.log( "API error: " + code );
+                                    }
+                                });
+                            }); 
+                        }
+                    });
+
+                    submitMessage.on("close", function() {
+                        submitMessage.toggle(false);
+                        submitBtn.setDisabled(false);
+                        submitBtn.toggle(true);
+                    });
+                });
             });
 
-            $.when(renderWikibenchPlugIn).done(function(data) {
+            $.when(renderPlugIn).done(function(data) {
                 console.log("done");
             });
         }

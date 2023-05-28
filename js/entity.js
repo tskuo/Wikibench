@@ -91,7 +91,7 @@
 
                     noticeBox = new OO.ui.MessageWidget({
                         type: "notice",
-                        label: "Please do not directly edit source of this page. To update the primary or your label, click the edit buttons. To discuss, visit the talk page."
+                        label: "Please do not directly edit source of this page. To update the primary or your label, click the edit buttons below. To discuss, visit the talk page."
                     });
 
                     /* ===== PRIMARY LABEL ===== */
