@@ -3,6 +3,7 @@
 
         // init
         var wikibenchURL = "User:Tzusheng/sandbox/Wikipedia:Wikibench/";
+        var wikibenchTalkURL = "User_talk:Tzusheng/sandbox/Wikipedia:Wikibench/"
         var entityType = "diff";
         var entityPagePrefix = wikibenchURL + entityType.charAt(0).toUpperCase() + entityType.slice(1) + ":";
         var entityPageHeader = "{{Warning |heading=Script installation is required for reading and editing |This page is part of the Wikibench project on the English Wikipedia. Please read the [[en:User:Tzusheng/sandbox/Wikipedia:Wikibench/Campaign:Editquality|project page]] and install the script to see this page correctly rendered. Do not edit the source without installing the script.}}";
@@ -20,6 +21,10 @@
         var facetIcons = {
             editDamage: ["alert", "success"],
             userIntent: ["alert", "heart"]
+        };
+        var facetColors = {
+            editDamage: ["#b32424", "#14866d"],
+            userIntent: ["#b32424", "#14866d"]
         };
 
         // get config
@@ -41,10 +46,9 @@
             var individualFieldset = {};
             var stackBars = {};
             var stackBarText = {};
+            var lowConfidenceHtmlSnippet = "<font color=\"#72777d\">(low confidence)</font>"
 
             var mwApi = new mw.Api();
-            
-
             var entityId = Number(wgPageName.substring(entityPagePrefix.length));
             var userName = mw.config.get("wgUserName");
             var userId = mw.config.get("wgUserId");
@@ -91,8 +95,9 @@
 
                     noticeBox = new OO.ui.MessageWidget({
                         type: "notice",
-                        label: "Please do not directly edit source of this page. To update the primary or your label, click the edit buttons below. To discuss, visit the talk page."
+                        label: new OO.ui.HtmlSnippet("Please do not directly edit the source of this page. To update the primary or your label, click the edit buttons below. To discuss, visit the talk page. To view the labeling progress of the campaign, visit the <a href=\"/wiki/User:Tzusheng/sandbox/Wikipedia:Wikibench/Campaign:Editquality\">campaign page</a>.")
                     });
+                    
 
                     /* ===== PRIMARY LABEL ===== */
                     
@@ -101,10 +106,24 @@
                         classes: ["wikibench-entity-primary-label"],
                     });
 
+                    var labelColor = {};
+                    for (var i = 0; i < facets.length; i++) {
+                        labelColor[facets[i]] = {};
+                        for (var j = 0; j < facetLabels[facets[i]].length; j++) {
+                            labelColor[facets[i]][facetLabels[facets[i]][j]] = facetColors[facets[i]][j];
+                        }
+                    }
+
                     for (var i = 0; i < facets.length; i++) {
                         var f = facets[i];
+                        // var labelColor = "#202122"; // default text color
+                        // for (var j = 0; j < facetLabels[f].length; j++) {
+                        //     if (label.facets[f].primaryLabel.label === facetLabels[f][j]) {
+                        //         labelColor = facetColors[f][j];
+                        //     }
+                        // }
                         var facetPrimaryLabel = new OO.ui.LabelWidget({
-                            label: label.facets[f].primaryLabel.label
+                            label: new OO.ui.HtmlSnippet("<font color=\"" + labelColor[f][label.facets[f].primaryLabel.label] + "\">" + label.facets[f].primaryLabel.label + "</font>")
                         });
                         primaryFieldset.addItems(
                             new OO.ui.FieldLayout(facetPrimaryLabel, {
@@ -244,7 +263,7 @@
                                         submitContent.facets[facets[i]].primaryLabel.lastModifier = userName;
                                         submitContent.facets[facets[i]].primaryLabel.lastModifierId = userId;
                                         submitContent.facets[facets[i]].primaryLabel.label = primaryLabels[facets[i]];
-                                        submitContent.facets[facets[i]].primaryLabel.touched = "time";
+                                        submitContent.facets[facets[i]].primaryLabel.touched = new Date(new Date().getTime()).toUTCString();
                                         submitContent.facets[facets[i]].primaryLabel.autolabeled = false;
                                     }
                                     mwApi.postWithToken("csrf",{
@@ -274,8 +293,30 @@
                         windowManager.openWindow( editPrimaryDialog );
                     });
 
+                    var discussPrimaryBtn = new OO.ui.ButtonWidget({
+                        label: "Talk"
+                    });
+
+                    discussPrimaryBtn.on("click", function() {
+                        window.open("/wiki/" + wikibenchTalkURL + entityType.charAt(0).toUpperCase() + entityType.slice(1) + ":" + entityId.toString(), "_self");
+                    })
+
+                    // primaryFieldset.addItems(
+                    //     new OO.ui.FieldLayout(editPrimaryBtn, {
+                    //         align: "left"
+                    //     })
+                    // );
                     primaryFieldset.addItems(
-                        new OO.ui.FieldLayout(editPrimaryBtn, {
+                        new OO.ui.FieldLayout(new OO.ui.Widget({
+                            content: [
+                                new OO.ui.HorizontalLayout({
+                                    items: [
+                                        editPrimaryBtn,
+                                        discussPrimaryBtn
+                                    ]
+                                })
+                            ]
+                        }), {
                             align: "left"
                         })
                     );
@@ -296,16 +337,22 @@
                                 userLabel[f] = l.label;
                                 userLowConfidences[f] = l.lowConfidence;
                                 userNote[f] = l.note;
-                                displayLabelName = l.label
+                                displayLabelName = "<font color=\"" + labelColor[f][l.label] + "\">" + l.label + "</font>";
                                 if (l.lowConfidence) {
-                                    displayLabelName = "likely " + displayLabelName;
+                                    displayLabelName = displayLabelName + " " + lowConfidenceHtmlSnippet;
                                 }
                             }
                         });
+                        // var labelColor = "#202122";
+                        // for (var j = 0; j < facetLabels[f].length; j++) {
+                        //     if (userLabel[f] === facetLabels[f][j]) {
+                        //         labelColor = facetColors[f][j];
+                        //     }
+                        // }
                         userFieldset.addItems(
                             new OO.ui.FieldLayout(
                                 new OO.ui.LabelWidget({
-                                    label: displayLabelName
+                                    label: new OO.ui.HtmlSnippet(displayLabelName)
                                 }), {
                                     label: facetNames[f].charAt(0).toUpperCase() + facetNames[f].slice(1),
                                     align: "left" 
@@ -437,8 +484,8 @@
                                             "label": tmpUserLabel[f],
                                             "note": tmpUserNote[f],
                                             "origin": "wikibench-enwiki-entity-page",
-                                            "created": "time1",
-                                            "touched": "time2",
+                                            "created": new Date(new Date().getTime()).toUTCString(),
+                                            "touched": new Date(new Date().getTime()).toUTCString(),
                                             "lowConfidence": tmpUserLowConfidences[f],
                                             "category": []
                                         }
@@ -459,7 +506,7 @@
                                         title: wgPageName,
                                         section: 0,
                                         text: entityPageHeader + "\n" + entityPageSplit + "\n" + JSON.stringify(submitContent),
-                                        summary: "Individual label change from the Wikibench entity page",
+                                        summary: "Individual label edit from the Wikibench entity page",
                                     }).done(function(result,jqXHR) {
                                         location.reload();
                                     })
@@ -510,17 +557,22 @@
                             });
                             label.facets[f].individualLabels.forEach(function(individualLabel) {
                                 if (individualLabel.label === l) {
+                                    var labelText = "<a href=\"/wiki/User:" + individualLabel.userName + "\">" + individualLabel.userName + "</a>";
+                                    labelCount[l]++;
+                                    if (individualLabel.lowConfidence) {
+                                        labelLowConfidenceCount[l]++;
+                                        labelText = labelText + " " + lowConfidenceHtmlSnippet;
+                                    }
                                     individualFieldset[f][l].addItems(
                                         new OO.ui.FieldLayout(
                                             new OO.ui.LabelWidget({label: individualLabel.note}),
-                                            {label: $("<a>")
-                                                .attr("href","/wiki/User:"+individualLabel.userName)
-                                                .text(individualLabel.userName)
-                                            }
+                                            {label: new OO.ui.HtmlSnippet(labelText)}
+                                            // {label: $("<a>")
+                                            //     .attr("href","/wiki/User:"+individualLabel.userName)
+                                            //     .text(individualLabel.userName)
+                                            // }
                                         )
                                     );
-                                    labelCount[l]++;
-                                    if (individualLabel.lowConfidence) labelLowConfidenceCount[l]++;
                                 }
                             });
                             individualFieldset[f][l].setLabel(l + " (" + labelCount[l].toString() + ")");
@@ -537,8 +589,8 @@
                         var stackBarTotal = 0;
                         var stackBarNames = [
                             facetLabels[f][0],
-                            "likely " + facetLabels[f][0],
-                            "likely " + facetLabels[f][1],
+                            facetLabels[f][0] + " (low confidence)",
+                            facetLabels[f][1] + " (low confidence)",
                             facetLabels[f][1]
                         ];
                         var stackBarColors = ["#b32424", "#fee7e6", "#d5fdf4", "#14866d"]

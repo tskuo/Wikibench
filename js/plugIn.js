@@ -246,8 +246,8 @@
                                         "label": userLabels[f],
                                         "note": facetNoteInputs[f].getValue(),
                                         "origin": "wikibench-enwiki-diff-plugin",
-                                        "created": "time1",
-                                        "touched": "time2",
+                                        "created": new Date(new Date().getTime()).toUTCString(),
+                                        "touched": new Date(new Date().getTime()).toUTCString(),
                                         "lowConfidence": facetLowConfidenceCheckboxes[f].isSelected(),
                                         "category": []
                                     }
