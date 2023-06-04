@@ -2,11 +2,12 @@
     $(document).ready(function() {
 
         // init
-        var wikibenchURL = "User:Tzusheng/sandbox/Wikipedia:Wikibench/";
-        var wikibenchTalkURL = "User_talk:Tzusheng/sandbox/Wikipedia:Wikibench/"
+        var wikibenchURL = "User:Tzusheng/sandbox/Wikipedia:Wikibench";
+        var wikibenchTalkURL = "User_talk:Tzusheng/sandbox/Wikipedia:Wikibench"
+        var campaignURL = wikibenchURL + "/Campaign:Editquality";
         var entityType = "diff";
-        var entityPagePrefix = wikibenchURL + entityType.charAt(0).toUpperCase() + entityType.slice(1) + ":";
-        var entityPageHeader = "{{Warning |heading=Script installation is required for reading and editing |This page is part of the Wikibench project on the English Wikipedia. Please read the [[en:User:Tzusheng/sandbox/Wikipedia:Wikibench/Campaign:Editquality|project page]] and install the script to see this page correctly rendered. Do not edit the source without installing the script.}}";
+        var entityPagePrefix = wikibenchURL + "/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/";
+        var entityPageHeader = "{{Warning |heading=Script installation is required for reading and editing |This page is part of the Wikibench project on the English Wikipedia. Please read the [[" + campaignURL + "|project page]] and install the script to see this page correctly rendered. Do not edit the source without installing the script.}}";
         var entityPageSplit = "-----";
         var language = "en";
         var facets = ["editDamage", "userIntent"];
@@ -33,6 +34,7 @@
         if(wgPageName.startsWith(entityPagePrefix) && mw.config.get("wgAction") === "view") {
 
             // widgets
+            var divRender = $(".mw-parser-output");
             var diffTableHeader = "<table class=\"diff diff-contentalign-left diff-editfont-monospace\" data-mw=\"interface\"><colgroup><col class=\"diff-marker\"><col class=\"diff-content\"><col class=\"diff-marker\"><col class=\"diff-content\"></colgroup><tbody>";
             var diffTableFooter = "</tbody></table>";
             var diffTableContent, diffTableTitle;
@@ -49,43 +51,15 @@
             var lowConfidenceHtmlSnippet = "<font color=\"#72777d\">(low confidence)</font>"
 
             var mwApi = new mw.Api();
-            var entityId = Number(wgPageName.substring(entityPagePrefix.length));
+            var entityId = wgPageName.substring(entityPagePrefix.length);
             var userName = mw.config.get("wgUserName");
             var userId = mw.config.get("wgUserId");
-            var revisionId = mw.config.get("wgRevisionId");
 
-            var getDiffContent = mwApi.get({
-                action: "compare",
-                fromrev: entityId,
-                torelative: "prev",
-            });
-
-            var setDiffTable = getDiffContent.then(function(ret) {
-                diffTableContent = ret.compare["*"];
-                diffTableTitle = 
-                "<tr class=\"diff-title\" lang=\"" + language + "\">" +
-                    "<td colspan=\"2\" class=\"diff-otitle diff-side-deleted\">" +
-                        "<div id=\"mw-diff-otitle1\">" + 
-                            "<strong><a href=\"/w/index.php?oldid=" + ret.compare.fromrevid + "\" title=\"" + ret.compare.fromtitle + "\">Previous revision</a>" +
-                        "</div>" +
-                        "<div id=\"mw-diff-otitle5\"></div>" +
-                    "</td>" +
-                    "<td colspan=\"2\" class=\"diff-ntitle diff-side-added\">" +
-                        "<div id=\"mw-diff-ntitle1\">" +
-                            "<strong><a href=\"/w/index.php?oldid=" + ret.compare.torevid + "\" title=\"" + ret.compare.fromtitle + "\">Edited revision</a>" +
-                        "</div>" +
-                        "<div id=\"mw-diff-ntitle5\"></div>" +
-                        "</td>" +
-                "</tr>";
-            });
-
-            var getPageContent = mwApi.get({
+            mwApi.get({
                 action: "parse",
                 page: wgPageName,
                 prop: "wikitext"
-            });
-
-            var setPageWidgets = getPageContent.then(function(ret) {
+            }).done(function(ret) {
                 mw.loader.using(["oojs-ui-core", "oojs-ui-widgets", "oojs-ui-windows", "mediawiki.diff.styles"]).done(function(){
                     var label = JSON.parse(ret.parse.wikitext["*"].split(entityPageSplit)[1]);
 
@@ -95,10 +69,9 @@
 
                     noticeBox = new OO.ui.MessageWidget({
                         type: "notice",
-                        label: new OO.ui.HtmlSnippet("Please do not directly edit the source of this page. To update the primary or your label, click the edit buttons below. To discuss, visit the talk page. To view the labeling progress of the campaign, visit the <a href=\"/wiki/User:Tzusheng/sandbox/Wikipedia:Wikibench/Campaign:Editquality\">campaign page</a>.")
+                        label: new OO.ui.HtmlSnippet("Please do not directly edit the source of this page. To update the primary or your label, click the edit buttons below. To discuss, visit the talk page. To view the labeling progress of the campaign, visit the <a href=\"/wiki/" + campaignURL + "\">campaign page</a>.")
                     });
                     
-
                     /* ===== PRIMARY LABEL ===== */
                     
                     primaryFieldset = new OO.ui.FieldsetLayout({ 
@@ -116,12 +89,6 @@
 
                     for (var i = 0; i < facets.length; i++) {
                         var f = facets[i];
-                        // var labelColor = "#202122"; // default text color
-                        // for (var j = 0; j < facetLabels[f].length; j++) {
-                        //     if (label.facets[f].primaryLabel.label === facetLabels[f][j]) {
-                        //         labelColor = facetColors[f][j];
-                        //     }
-                        // }
                         var facetPrimaryLabel = new OO.ui.LabelWidget({
                             label: new OO.ui.HtmlSnippet("<font color=\"" + labelColor[f][label.facets[f].primaryLabel.label] + "\">" + label.facets[f].primaryLabel.label + "</font>")
                         });
@@ -298,7 +265,7 @@
                     });
 
                     discussPrimaryBtn.on("click", function() {
-                        window.open("/wiki/" + wikibenchTalkURL + entityType.charAt(0).toUpperCase() + entityType.slice(1) + ":" + entityId.toString(), "_self");
+                        window.open("/wiki/" + wikibenchTalkURL + "/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/" + entityId, "_self");
                     })
 
                     // primaryFieldset.addItems(
@@ -343,12 +310,6 @@
                                 }
                             }
                         });
-                        // var labelColor = "#202122";
-                        // for (var j = 0; j < facetLabels[f].length; j++) {
-                        //     if (userLabel[f] === facetLabels[f][j]) {
-                        //         labelColor = facetColors[f][j];
-                        //     }
-                        // }
                         userFieldset.addItems(
                             new OO.ui.FieldLayout(
                                 new OO.ui.LabelWidget({
@@ -528,15 +489,15 @@
                         })
                     ]);
 
-                    var divRender = $(".mw-parser-output");
-
                     divRender.find("table").remove(); // remove warning message
                     divRender.find("hr").remove(); // remove horizontal line
                     divRender.find("p").remove(); // remove json content
 
                     divRender
                         .append(noticeBox.$element)
-                        .append(diffTableHeader + diffTableTitle + diffTableContent + diffTableFooter)
+                        .append("<h2>Difference between revisions</h2>")
+                        .append("<div id=\"wikibench-entity-page-diff-table\"></div>")
+                        .append("<h2>Primary and your labels</h2>")
                         .append(primaryFieldset.$element)
                         .append(userFieldset.$element);
 
@@ -567,10 +528,6 @@
                                         new OO.ui.FieldLayout(
                                             new OO.ui.LabelWidget({label: individualLabel.note}),
                                             {label: new OO.ui.HtmlSnippet(labelText)}
-                                            // {label: $("<a>")
-                                            //     .attr("href","/wiki/User:"+individualLabel.userName)
-                                            //     .text(individualLabel.userName)
-                                            // }
                                         )
                                     );
                                 }
@@ -605,7 +562,7 @@
                         stackBarText[f] += "Total=" + (stackBarTotal).toString() + "}}";
 
                         divRender
-                                .append("<h2>" + facetNames[f].charAt(0).toUpperCase() + facetNames[f].slice(1) + "</h2>")
+                                .append("<h2>" + facetNames[f].charAt(0).toUpperCase() + facetNames[f].slice(1) + " labels</h2>")
                                 .append("<h3>Label distribution</h3>")
                                 .append("<div id=\"Wikibench-StackBar-" + f + "\"></div>")
                                 .append("<h3>Individual labels</h3>");
@@ -632,6 +589,36 @@
                         }).done(function(ret) {
                             $("#Wikibench-StackBar-"+f).append(ret.parse.text["*"]);
                         });
+                    });
+
+                    // diff table
+                    mwApi.get({
+                        action: "compare",
+                        fromrev: parseInt(entityId.split("/")[0]),
+                        torev: parseInt(entityId.split("/")[1]),
+                    }).done(function(ret) {
+                        console.log(ret);
+                        diffTableContent = ret.compare["*"];
+                        diffTableTitle = 
+                        "<tr class=\"diff-title\" lang=\"" + language + "\">" +
+                            "<td colspan=\"2\" class=\"diff-otitle diff-side-deleted\">" +
+                                "<div id=\"mw-diff-otitle1\">" + 
+                                    "<strong><a href=\"/wiki/Special:Permalink/" + ret.compare.fromrevid + "\">Revision before edit</a></strong>" +
+                                "</div>" +
+                                "<div id=\"mw-diff-otitle3\"> <span class=\"comment\">Revision ID: " + ret.compare.fromrevid + "</span></div>" +
+                                "<div id=\"mw-diff-otitle5\"></div>" +
+                            "</td>" +
+                            "<td colspan=\"2\" class=\"diff-ntitle diff-side-added\">" +
+                                "<div id=\"mw-diff-ntitle1\">" +
+                                    "<strong><a href=\"/wiki/Special:Permalink/" + ret.compare.torevid + "\">Revision after edit</a></strong>" +
+                                    " (<a href=\"/wiki/Special:Diff/" + ret.compare.fromrevid + "/" + ret.compare.torevid + "\">diff page</a>)" +
+                                "</div>" +
+                                "<div id=\"mw-diff-ntitle3\"> <span class=\"comment\">Revision ID: " + ret.compare.torevid + "</span></div>" +
+                                "<div id=\"mw-diff-ntitle5\"></div>" +
+                            "</td>" +
+                        "</tr>";
+                        // "<tr><td colspan=\"4\" class=\"diff-multi\" lang=\"" + language + "\">" + "<a href=\"/wiki/Special:Diff/" + ret.compare.fromrevid + "/" + ret.compare.torevid + "\">Link to the diff page</a></td></tr>";
+                        divRender.find("#wikibench-entity-page-diff-table").append(diffTableHeader + diffTableTitle + diffTableContent + diffTableFooter);
                     });
                 });
             });

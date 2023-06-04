@@ -3,7 +3,8 @@
         if(mw.config.get("wgDiffNewId") !== null) {
 
             // init
-            var wikibenchURL = "User:Tzusheng/sandbox/Wikipedia:Wikibench/";
+            var wikibenchURL = "User:Tzusheng/sandbox/Wikipedia:Wikibench";
+            var campaignURL = "User:Tzusheng/sandbox/Wikipedia:Wikibench/Campaign:Editquality";
             var entityType = "diff";
             var entityPageSplit = "-----";
             var facets = ["editDamage", "userIntent"];
@@ -29,11 +30,12 @@
             // get config
             var mwApi = new mw.Api();
             var diffNewId = mw.config.get("wgDiffNewId");
+            var diffOldId = mw.config.get("wgDiffOldId");
             var userName = mw.config.get("wgUserName");
             var userId = mw.config.get("wgUserId");
-            var revisionId; // revision ID of the entity page
-            var entityPageTitle = wikibenchURL + entityType.charAt(0).toUpperCase() + entityType.slice(1) + ":" + diffNewId.toString();
-            var entityPageHeader = "{{Warning |heading=Script installation is required for reading and editing |This page is part of the Wikibench project on the English Wikipedia. Please read the [[en:User:Tzusheng/sandbox/Wikipedia:Wikibench/Campaign:Editquality|project page]] and install the script to see this page correctly rendered. Do not edit the source without installing the script.}}";
+            var revisionId; // revision ID of the entity page, not the diff page
+            var entityPageTitle = wikibenchURL + "/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/" + diffOldId.toString() + "/" + diffNewId.toString();
+            var entityPageHeader = "{{Warning |heading=Script installation is required for reading and editing |This page is part of the Wikibench project on the English Wikipedia. Please read the [[" + campaignURL + "|project page]] and install the script to see this page correctly rendered. Do not edit the source without installing the script.}}";
             var routingMessage = "You are welcome to review other Wikipedians' labels on the <a href=\"/wiki/" + entityPageTitle + "\">entity page of this " + entityType + "</a> or close this message for resubmission.";
 
             // labels
@@ -142,8 +144,10 @@
                     submitMessage.toggle(false);
 
                     var fieldset = new OO.ui.FieldsetLayout({ 
-                        label: "Wikibench Plug-In",
-                        id: "wikibench-diff-plugin"
+                        label: new OO.ui.HtmlSnippet("Wikibench Plug-In"),
+                        id: "wikibench-diff-plugin",
+                        help: new OO.ui.HtmlSnippet("<a href=\"/wiki/" + campaignURL + "\">Editquality Campaign</a>"),
+                        helpInline: true
                     });
 
                     // if user label already exists, compare it with the primary label and update submitMessage accordingly
@@ -178,8 +182,8 @@
                     // add all the widgets to feildset
                     fieldset.addItems(
                         new OO.ui.FieldLayout(
-                            new OO.ui.LabelWidget({label: diffNewId.toString()}), {
-                            label: "Diff new ID",
+                            new OO.ui.LabelWidget({label: diffOldId.toString() + "/" + diffNewId.toString()}), {
+                            label: "Diff IDs",
                             align: "left"
                         })
                     );
@@ -255,7 +259,7 @@
                                 if (Object.keys(ret.query.pages)[0] === "-1") { // entity page doesn't exist
                                     submitContent = {
                                         "entityType": entityType,
-                                        "entityId": diffNewId,
+                                        "entityId": diffOldId.toString() + "/" + diffNewId.toString(),
                                         "facets": {}
                                     }
                                     facets.forEach(function(f) {

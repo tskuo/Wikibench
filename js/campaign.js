@@ -5,7 +5,7 @@
             mw.loader.using(["oojs-ui-core", "oojs-ui-widgets", "oojs-ui-windows"]).done(function() {
 
                 // init
-                var wikibenchURL = "User:Tzusheng/sandbox/Wikipedia:Wikibench/";
+                var wikibenchURL = "User:Tzusheng/sandbox/Wikipedia:Wikibench";
                 var entityType = "diff";
                 var language = "en";
                 var entityPageSplit = "-----";
@@ -53,7 +53,7 @@
                 var prefixsearchParams = {
                     action: "query",
                     list: "prefixsearch",
-                    pssearch: wikibenchURL + entityType.charAt(0).toUpperCase() + entityType.slice(1) + ":",
+                    pssearch: wikibenchURL + "/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/",
                     format: "json",
                     pslimit: 500
                 }
@@ -166,7 +166,6 @@
                         });
                         tableDiv.before(layout.$element);
 
-
                         var tableLabelColors = {};
                         for (var i = 0; i < facets.length; i++) {
                             tableLabelColors[facets[i]] = {};
@@ -224,7 +223,7 @@
                                 }
                             }
 
-                            var hrefLink = "<a href=\"/wiki/" + wikibenchURL + entityType.charAt(0).toUpperCase() + entityType.slice(1) + ":" + label.entityId.toString() + "\"></a>";
+                            var hrefLink = "<a href=\"/wiki/" + wikibenchURL + "/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/" + label.entityId.toString() + "\"></a>";
 
                             tbody.append($("<tr>")
                                 .append($("<th>").text(label.entityId).wrapInner(hrefLink).attr("scope", "row"))
