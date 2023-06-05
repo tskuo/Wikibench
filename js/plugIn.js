@@ -260,6 +260,7 @@
                                     submitContent = {
                                         "entityType": entityType,
                                         "entityId": diffOldId.toString() + "/" + diffNewId.toString(),
+                                        "entityNote": $("td.diff-multi").text(),
                                         "facets": {}
                                     }
                                     facets.forEach(function(f) {

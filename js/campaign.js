@@ -134,30 +134,30 @@
                                 // do nothing
                             }
                         }
-                        var button1 = new OO.ui.ButtonWidget({label: "low label count"});
+                        var button1 = new OO.ui.ButtonWidget({label: "provide more labels"});
                         button1.on("click", function() {
                             sortColumn("#table-header-label-count", "ascending");
                         });
-                        var button2 = new OO.ui.ButtonWidget({label: "discrepancy (primary & yours)"});
+                        var button2 = new OO.ui.ButtonWidget({label: "compare my labels"});
                         button2.on("click", function() {
                             sortColumn("#table-header-userIntent-primary-label", "descending");
                             sortColumn("#table-header-editDamage-primary-label", "descending");
                             sortColumn("#table-header-userIntent-your-label", "descending");
                             sortColumn("#table-header-editDamage-your-label", "descending");
                         });
-                        var button3 = new OO.ui.ButtonWidget({label: "divisiveness (edit damage)"});
+                        var button3 = new OO.ui.ButtonWidget({label: "build consensus (edit damage)"});
                         button3.on("click", function() {
                             sortColumn("#table-header-label-count", "descending");
                             sortColumn("#table-header-editDamage-disagreement", "descending")
                         });
-                        var button4 = new OO.ui.ButtonWidget({label: "divisiveness (user intent)"});
+                        var button4 = new OO.ui.ButtonWidget({label: "build consensus (user intent)"});
                         button4.on("click", function() {
                             sortColumn("#table-header-label-count", "descending");
                             sortColumn("#table-header-userIntent-disagreement", "descending");
                         });
                         var layout = new OO.ui.HorizontalLayout({
                             items: [
-                                new OO.ui.LabelWidget({ label: "Sort by:" }),
+                                new OO.ui.LabelWidget({ label: "I want to:" }),
                                 button1,
                                 button2,
                                 button3,

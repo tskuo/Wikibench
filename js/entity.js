@@ -614,10 +614,10 @@
                                     " (<a href=\"/wiki/Special:Diff/" + ret.compare.fromrevid + "/" + ret.compare.torevid + "\">diff page</a>)" +
                                 "</div>" +
                                 "<div id=\"mw-diff-ntitle3\"> <span class=\"comment\">Revision ID: " + ret.compare.torevid + "</span></div>" +
-                                "<div id=\"mw-diff-ntitle5\"></div>" +
+                                // "<div id=\"mw-diff-ntitle5\"></div>" +
                             "</td>" +
-                        "</tr>";
-                        // "<tr><td colspan=\"4\" class=\"diff-multi\" lang=\"" + language + "\">" + "<a href=\"/wiki/Special:Diff/" + ret.compare.fromrevid + "/" + ret.compare.torevid + "\">Link to the diff page</a></td></tr>";
+                        "</tr>" +
+                        "<tr><td colspan=\"4\" class=\"diff-multi\" lang=\"" + language + "\">" + label.entityNote + "</td></tr>";
                         divRender.find("#wikibench-entity-page-diff-table").append(diffTableHeader + diffTableTitle + diffTableContent + diffTableFooter);
                     });
                 });
