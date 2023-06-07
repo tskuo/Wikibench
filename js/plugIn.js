@@ -22,7 +22,7 @@
             };
             var facetIcons = {
                 editDamage: ["alert", "success"],
-                userIntent: ["alert", "heart"]
+                userIntent: ["alert", "success"]
             }
             var successMessage = "Your submission has been recorded";
             var warningMessage = "Your submission has been recorded but is different from the primary label";

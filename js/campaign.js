@@ -55,10 +55,55 @@
                     list: "prefixsearch",
                     pssearch: wikibenchURL + "/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/",
                     format: "json",
-                    pslimit: 500
+                    pslimit: 1
                 }
 
+                // var contentLists = [];
+                // var testingList = [];
+                // var conitnueSearch = true;
+                // function queryBatch(param) {
+
+                // }
+                // while (conitnueSearch) {
+                //     console.log("loop!")
+                //     mwApi.get(prefixsearchParams).done(function(ret1){
+                //         var pages = ret1.query.prefixsearch; // pages is an array
+                //         for (var p = 0; p < pages.length; p++) {
+                //             testingList.push(pages[p].title);
+                //         }
+                //         if (ret1.continue === undefined) {
+                //             conitnueSearch = false;
+                //         } else {
+                //             prefixsearchParams.psoffset = ret1.continue.psoffset;
+                //         }
+                //         // var pageTitles = [];
+                //         // for (var p = 0; p < pages.length; p++) {
+                //         //     pageTitles.push(pages[p].title);
+                //         // }
+                //         // var revisionParams = {
+                //         //     action: "query",
+                //         //     prop: "revisions",
+                //         //     rvprop: "content",
+                //         //     titles: pageTitles.join("|"),
+                //         //     format: "json"
+                //         // }
+                //         // mwApi.get(revisionParams).done(function(ret2) {
+                //         //     for (var r in ret2.query.pages) {
+                //         //         contentLists.push(JSON.parse(revisions[r].revisions[0]["*"].split(entityPageSplit)[1]));
+                //         //     }
+                //         //     if (ret1.continue !== undefined) {
+                //         //         conitnueSearch = false;
+                //         //     } 
+                //         // });
+                //     });
+                // }
+                // console.log(testingList);
+
+
+
                 mwApi.get(prefixsearchParams).done(function(prefixsearchData) {
+                    console.log(prefixsearchData);
+                    console.log(prefixsearchData.continue);
                     var pages = prefixsearchData.query.prefixsearch; // pages is an array
                     var pageTitles = [];
                     for (var p = 0; p < pages.length; p++) {
@@ -75,6 +120,7 @@
                     
                     mwApi.get(revisionParams).done(function(revisionData) {
                         var revisions = revisionData.query.pages; // revisions is an object, not array
+                        console.log(revisions);
                         var label;
                         // var tableHTML = "<table class=\"wikitable sortable jquery-tablesorter\" id=\"wikibench-table-id\">" + 
                         //     "<thead>" + 
@@ -165,6 +211,11 @@
                             ]
                         });
                         tableDiv.before(layout.$element);
+
+                        // var loadDataBtn = new OO.ui.ButtonWidget({label: "load more rows"});
+                        // loadDataBtn.on("click", function() {
+                            
+                        // })
 
                         var tableLabelColors = {};
                         for (var i = 0; i < facets.length; i++) {
