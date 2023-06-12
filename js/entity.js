@@ -226,6 +226,7 @@
                                     var revisions = ret.query.pages;
                                     var pageId = Object.keys(revisions)[0];
                                     var submitContent = JSON.parse(revisions[pageId].revisions[0]["*"].split(entityPageSplit)[1]);
+                                    var lastModifier = submitContent.facets[facets[0]].primaryLabel.lastModifier;
                                     for (var i = 0; i < facets.length; i++) {
                                         submitContent.facets[facets[i]].primaryLabel.lastModifier = userName;
                                         submitContent.facets[facets[i]].primaryLabel.lastModifierId = userId;
@@ -240,7 +241,16 @@
                                         text: entityPageHeader + "\n" + entityPageSplit + "\n" + JSON.stringify(submitContent),
                                         summary: "Primary label change from the Wikibench entity page: " + summary,
                                     }).done(function(result,jqXHR) {
-                                        location.reload();
+                                        // notify the previous labeler on the talk page
+                                        mwApi.postWithToken("csrf", {
+                                            action: "edit",
+                                            title: wikibenchTalkURL + "/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/" + entityId,
+                                            section: "new",
+                                            sectiontitle: "The primary label has been edited",
+                                            text: "{{ping|" + lastModifier + "}} [[User:" + userName + "|" + userName + "]] edited the primary label previously submitted by you. If you both agree with the change, awesome! But if you can't reach a consensus, kindly engage in a discussion on this talk page and involve other Wikpedians if needed."
+                                        }).done(function(result,jqXHR) {
+                                            location.reload();
+                                        });
                                     });
                                 });
                             }, this );
