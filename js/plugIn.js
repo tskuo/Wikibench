@@ -365,7 +365,7 @@
             });
 
             $.when(renderPlugIn).done(function(data) {
-                console.log("done");
+                //console.log("done");
             });
         }
     });

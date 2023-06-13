@@ -247,7 +247,7 @@
                                             title: wikibenchTalkURL + "/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/" + entityId,
                                             section: "new",
                                             sectiontitle: "The primary label has been edited",
-                                            text: "{{ping|" + lastModifier + "}} [[User:" + userName + "|" + userName + "]] edited the primary label previously submitted by you. If you both agree with the change, awesome! But if you can't reach a consensus, kindly engage in a discussion on this talk page and involve other Wikpedians if needed."
+                                            text: "{{Ping|" + lastModifier + "}} [[User:" + userName + "|" + userName + "]] edited the primary label that you previously submitted. If you both agree with the change, awesome! But if you can't reach a consensus, kindly engage in a discussion on this talk page and involve other Wikpedians if needed. ~~~~"
                                         }).done(function(result,jqXHR) {
                                             location.reload();
                                         });
@@ -607,7 +607,6 @@
                         fromrev: parseInt(entityId.split("/")[0]),
                         torev: parseInt(entityId.split("/")[1]),
                     }).done(function(ret) {
-                        console.log(ret);
                         diffTableContent = ret.compare["*"];
                         diffTableTitle = 
                         "<tr class=\"diff-title\" lang=\"" + language + "\">" +
