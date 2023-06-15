@@ -189,15 +189,15 @@
                                 // handle individual labels for disagreements
                                 if (label.facets[f].individualLabels[j].label === facetLabels[f][0]) {
                                     if (label.facets[f].individualLabels[j].lowConfidence) {
-                                        individualLabels[f].push(0.25);
+                                        individualLabels[f].push(-0.5);
                                     }
                                     else {
-                                        individualLabels[f].push(0);
+                                        individualLabels[f].push(-1);
                                     }
                                 }
                                 if (label.facets[f].individualLabels[j].label === facetLabels[f][1]) {
                                     if (label.facets[f].individualLabels[j].lowConfidence) {
-                                        individualLabels[f].push(0.75);
+                                        individualLabels[f].push(0.5);
                                     }
                                     else {
                                         individualLabels[f].push(1);

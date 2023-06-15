@@ -21,7 +21,7 @@
         };
         var facetIcons = {
             editDamage: ["alert", "success"],
-            userIntent: ["alert", "heart"]
+            userIntent: ["alert", "success"]
         };
         var facetColors = {
             editDamage: ["#b32424", "#14866d"],
@@ -157,7 +157,7 @@
                         
                         this.primaryLabelMessage = new OO.ui.MessageWidget({
                             type: "warning",
-                            label: "Please respect and refer to other Wikipedians' perspectives before editing the primary label on behalf of the community."
+                            label: "Please respect others' perspectives when editing the primary label. After publishing changes, the system will notify the last modifier on the talk page with your signature."
                         });
 
                         this.content.addItems([this.primaryLabelMessage]);
@@ -247,7 +247,7 @@
                                             title: wikibenchTalkURL + "/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/" + entityId,
                                             section: "new",
                                             sectiontitle: "The primary label has been edited",
-                                            text: "{{Ping|" + lastModifier + "}} [[User:" + userName + "|" + userName + "]] edited the primary label that you previously submitted. If you both agree with the change, awesome! But if you can't reach a consensus, kindly engage in a discussion on this talk page and involve other Wikpedians if needed. ~~~~"
+                                            text: "{{Ping|" + lastModifier + "}} [[User:" + userName + "|" + userName + "]] edited the primary label that you previously submitted. If you disagree with the change, please kindly engage in a discussion on this talk page and involve other Wikpedians if needed. ~~~~"
                                         }).done(function(result,jqXHR) {
                                             location.reload();
                                         });
