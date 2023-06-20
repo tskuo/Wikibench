@@ -138,7 +138,7 @@
                         sortColumn("#table-header-label-count", "descending");
                         sortColumn("#table-header-userIntent-disagreement", "descending");
                     });
-                    var layout = new OO.ui.HorizontalLayout({
+                    var layoutBefore = new OO.ui.HorizontalLayout({
                         items: [
                             new OO.ui.LabelWidget({ label: "I want to:" }),
                             button1,
@@ -147,7 +147,21 @@
                             button4
                         ]
                     });
-                    tableDiv.before(layout.$element);
+                    tableDiv.before(layoutBefore.$element);
+
+                    var searchInputDiff = new OO.ui.SearchInputWidget({
+                        placeholder: "oldid/newid"
+                    });
+                    searchInputDiff.on("enter", function() {
+                        window.open("/wiki/Special:Diff/" + searchInputDiff.getValue(), "_blank");
+                    });
+                    var layoutAfter = new OO.ui.HorizontalLayout({
+                        items: [
+                            new OO.ui.LabelWidget({ label: "Direct submission:" }),
+                            searchInputDiff
+                        ]
+                    })
+                    tableDiv.after(layoutAfter.$element);
 
                     var tableLabelColors = {};
                     for (var i = 0; i < facets.length; i++) {
