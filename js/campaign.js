@@ -119,6 +119,7 @@
                     }
                     var button1 = new OO.ui.ButtonWidget({label: "provide more labels"});
                     button1.on("click", function() {
+                        sortColumn("#table-header-editDamage-your-label", "ascending");
                         sortColumn("#table-header-label-count", "ascending");
                     });
                     var button2 = new OO.ui.ButtonWidget({label: "compare my labels"});
