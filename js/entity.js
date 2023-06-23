@@ -157,7 +157,7 @@
                         
                         this.primaryLabelMessage = new OO.ui.MessageWidget({
                             type: "warning",
-                            label: "Please respect others' perspectives when editing the primary label. After publishing changes, the system will notify the last modifier on the talk page with your signature."
+                            label: new OO.ui.HtmlSnippet("When editing primary labels, <a href=\"/wiki/Wikipedia:Be_bold\">be bold</a> yet respectful of others' views. Wikibench will notify the last modifier on the <a href=\"/wiki/" + wikibenchTalkURL + "/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/" + entityId + "\">talk page</a> with <a href=\"/wiki/Wikipedia:Signatures#Using_four_tildes\">your signature</a> after publishing changes.")
                         });
 
                         this.content.addItems([this.primaryLabelMessage]);
