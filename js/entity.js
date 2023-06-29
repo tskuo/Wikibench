@@ -247,7 +247,7 @@
                                             title: wikibenchTalkURL + "/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/" + entityId,
                                             section: "new",
                                             sectiontitle: "The primary label has been edited",
-                                            text: "{{Ping|" + lastModifier + "}} [[User:" + userName + "|" + userName + "]] edited the primary label that you previously submitted. If you disagree with the change, please kindly engage in a discussion on this talk page and involve other Wikpedians if needed. ~~~~"
+                                            text: "{{Ping|" + lastModifier + "}} [[User:" + userName + "|" + userName + "]] edited the primary label that you previously submitted. If you disagree with the change, please kindly engage in a discussion on this talk page and consider seeking a third opinion if needed. ~~~~"
                                         }).done(function(result,jqXHR) {
                                             location.reload();
                                         });
