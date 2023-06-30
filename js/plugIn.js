@@ -213,7 +213,8 @@
                         new OO.ui.FieldLayout(submitMessage, {})
                     ]);
 
-                    $("#mw-oldid").after(fieldset.$element);
+                    //$("#mw-oldid").after(fieldset.$element);
+                    $(".mw-revslider-container").after(fieldset.$element);
 
                     submitBtn.on("click", function() {
 
