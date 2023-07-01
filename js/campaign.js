@@ -73,9 +73,13 @@
                         .done(function(data) {
                             var pages = data.query.pages;
                             pages.forEach(function(page){
-                                page['content'] = page.revisions[0].content;
-                                delete page['revisions'];
-                                results.push(page);
+                                // console.log(page);
+                                // console.log(page.revisions);
+                                if (page.revisions !== undefined) { // band-aid
+                                    page['content'] = page.revisions[0].content;
+                                    delete page['revisions'];
+                                    results.push(page);
+                                }
                             });
                             if(data.continue){
                                 getPrefixedPages(entityType, data.continue, deferred, results);

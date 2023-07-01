@@ -214,7 +214,8 @@
                     ]);
 
                     //$("#mw-oldid").after(fieldset.$element);
-                    $(".mw-revslider-container").after(fieldset.$element);
+                    //$(".mw-revslider-container").after(fieldset.$element);
+                    $("#contentSub").after(fieldset.$element);
 
                     submitBtn.on("click", function() {
 
