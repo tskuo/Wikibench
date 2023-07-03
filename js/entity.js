@@ -5,6 +5,7 @@
         var wikibenchURL = "User:Tzusheng/sandbox/Wikipedia:Wikibench";
         var wikibenchTalkURL = "User_talk:Tzusheng/sandbox/Wikipedia:Wikibench"
         var campaignURL = wikibenchURL + "/Campaign:Editquality";
+        var campaignTalkURL = wikibenchTalkURL + "/Campaign:Editquality";
         var entityType = "diff";
         var entityPagePrefix = wikibenchURL + "/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/";
         var entityPageHeader = "{{Warning |heading=Script installation is required for reading and editing |This page is part of the Wikibench project on the English Wikipedia. Please read the [[" + campaignURL + "|project page]] and install the script to see this page correctly rendered. Do not edit the source without installing the script.}}";
@@ -70,6 +71,11 @@
                     noticeBox = new OO.ui.MessageWidget({
                         type: "notice",
                         label: new OO.ui.HtmlSnippet("Please do not directly edit the source of this page. To update the primary or your label, click the edit buttons below. To discuss, visit the talk page. To view the labeling progress of the campaign, visit the <a href=\"/wiki/" + campaignURL + "\">campaign page</a>.")
+                    });
+
+                    revdelBox = new OO.ui.MessageWidget({
+                        type: "warning",
+                        label: new OO.ui.HtmlSnippet("This diff has been <a href=\"/wiki/Wikipedia:Revision_deletion\">revdel\'d</a>. Please visit the <a href=\"/wiki/" + campaignTalkURL + "\">campaign talk page</a> for an ongoing discussion about handling revdel\'d diffs.")
                     });
                     
                     /* ===== PRIMARY LABEL ===== */
@@ -628,6 +634,8 @@
                         "</tr>" +
                         "<tr><td colspan=\"4\" class=\"diff-multi\" lang=\"" + language + "\">" + label.entityNote + "</td></tr>";
                         divRender.find("#wikibench-entity-page-diff-table").append(diffTableHeader + diffTableTitle + diffTableContent + diffTableFooter);
+                    }).fail(function(e) {
+                        divRender.find("#wikibench-entity-page-diff-table").append(revdelBox.$element);
                     });
                 });
             });
