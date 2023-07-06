@@ -77,6 +77,11 @@
                         type: "warning",
                         label: new OO.ui.HtmlSnippet("This diff has been <a href=\"/wiki/Wikipedia:Revision_deletion\">revdel\'d</a>. Please visit the <a href=\"/wiki/" + campaignTalkURL + "\">campaign talk page</a> for an ongoing discussion about handling revdel\'d diffs.")
                     });
+
+                    newPageBox = new OO.ui.MessageWidget({
+                        type: "warning",
+                        label: new OO.ui.HtmlSnippet("This diff is a new page creation. Please visit the <a href=\"/wiki/" + campaignTalkURL + "\">campaign talk page</a> for an ongoing discussion about handling new pages.")
+                    });
                     
                     /* ===== PRIMARY LABEL ===== */
                     
@@ -635,7 +640,12 @@
                         "<tr><td colspan=\"4\" class=\"diff-multi\" lang=\"" + language + "\">" + label.entityNote + "</td></tr>";
                         divRender.find("#wikibench-entity-page-diff-table").append(diffTableHeader + diffTableTitle + diffTableContent + diffTableFooter);
                     }).fail(function(e) {
-                        divRender.find("#wikibench-entity-page-diff-table").append(revdelBox.$element);
+                        if (entityId.split("/")[0] === "false") {
+                            divRender.find("#wikibench-entity-page-diff-table").append(newPageBox.$element);
+                        }
+                        else {
+                            divRender.find("#wikibench-entity-page-diff-table").append(revdelBox.$element);
+                        }
                     });
                 });
             });
