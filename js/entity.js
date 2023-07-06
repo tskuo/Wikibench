@@ -1,6 +1,5 @@
 (function ($, mw) {
     $(document).ready(function() {
-
         // init
         var wikibenchURL = "User:Tzusheng/sandbox/Wikipedia:Wikibench";
         var wikibenchTalkURL = "User_talk:Tzusheng/sandbox/Wikipedia:Wikibench"
@@ -8,6 +7,7 @@
         var campaignTalkURL = wikibenchTalkURL + "/Campaign:Editquality";
         var entityType = "diff";
         var entityPagePrefix = wikibenchURL + "/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/";
+        var entityPagePrefixArchive = wikibenchURL + "/Archive/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/";
         var entityPageHeader = "{{Warning |heading=Script installation is required for reading and editing |This page is part of the Wikibench project on the English Wikipedia. Please read the [[" + campaignURL + "|project page]] and install the script to see this page correctly rendered. Do not edit the source without installing the script.}}";
         var entityPageSplit = "-----";
         var language = "en";
@@ -32,7 +32,7 @@
         // get config
         var wgPageName = mw.config.get("wgPageName");
 
-        if(wgPageName.startsWith(entityPagePrefix) && mw.config.get("wgAction") === "view") {
+        if((wgPageName.startsWith(entityPagePrefix) || (wgPageName.startsWith(entityPagePrefixArchive))) && mw.config.get("wgAction") === "view") {
 
             // widgets
             var divRender = $(".mw-parser-output");
