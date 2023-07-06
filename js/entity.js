@@ -41,6 +41,8 @@
             var diffTableContent, diffTableTitle;
             var windowManager;
             var noticeBox;
+            var revdelBox;
+            var newPageBox;
             var primaryFieldset;
             var userFieldset;
             var userLabel = {};
