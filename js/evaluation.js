@@ -7,7 +7,7 @@
                 // init
                 var WIKIBENCH_PREFIX = "Tzusheng/sandbox/Wikipedia:Wikibench";
                 var WIKIBENCH_NAMESPACE = 2;
-                var RATE_LIMIT = 5;
+                var RATE_LIMIT = 3;
                 var entityType = "diff";
                 var language = "en";
                 var entityPageSplit = "-----";
@@ -118,9 +118,7 @@
 
                     for (var i = 0; i < results.length; i++) {
                         label = JSON.parse(results[i].content.split(entityPageSplit)[1]);
-                        // if (label.entityNote === "") {
-                        // if ((label.entityId.split("/")[1][0] === "6") || (label.entityId.split("/")[1][0] === "7")) {
-                        if ((label.entityId.split("/")[0] !== "false") && (label.entityNote === "")) {
+                        if ((label.entityId.split("/")[0] !== "false") && (label.entityNote === "")) { // exclude new page and multiple changes
                             var newId = label.entityId.split("/")[1];
                             tableRows[newId] = {};
                             tableRows[newId]["entityId"] = label.entityId;
@@ -137,7 +135,7 @@
                                 contentType: 'application/x-www-form-urlencoded',
                                 data: '{"rev_id":' + newId + ', "lang": "en"}'
                             }).done( function ( result, textStatus, jqXHR ) {
-                                liftwing[result.revision_id.toString()] = result["output"]["prediction"];
+                                liftwing[result.revision_id.toString()] = result["output"];
                             });
                             promises.push(request1);
 
@@ -164,9 +162,10 @@
 
                     $.when.apply(null, promises).done(function() {
                         tbody.find("tr").remove(); // remove the empty line
+                        console.log(liftwing);
                         for (var r = 0; r < revids.length; r++) {
                             var row = tableRows[revids[r]];
-                            var liftwing_prediction = liftwing[revids[r]] ? "reverted" : "not reverted";
+                            var liftwing_prediction = liftwing[revids[r]]["prediction"] ? "reverted" : "not reverted";
                             var ores_prediction_editDamage = ores[revids[r]]["damaging"]["score"]["prediction"] ? "damaging" : "not damaging";
                             var ores_prediction_userIntent = ores[revids[r]]["goodfaith"]["score"]["prediction"] ? "good faith" : "bad faith";
                             var hrefLink = "<a href=\"/wiki/User:" + WIKIBENCH_PREFIX + "/Entity:" + entityType.charAt(0).toUpperCase() + entityType.slice(1) + "/" + row["entityId"] + "\"></a>";
@@ -174,9 +173,12 @@
                                 .append($("<th>").text(row["entityId"]).wrapInner(hrefLink).attr("scope", "row"))
                                 .append($("<td>").text(row["wikibench"][facets[0]]).attr("bgcolor", tableLabelColors[facets[0]][row["wikibench"][facets[0]]]))
                                 .append($("<td>").text(ores_prediction_editDamage).attr("bgcolor", tableLabelColors[facets[0]][ores_prediction_editDamage]))
+                                .append($("<td>").text(ores[revids[r]]["damaging"]["score"]["probability"][ores[revids[r]]["damaging"]["score"]["prediction"].toString()].toFixed(3)))
                                 .append($("<td>").text(row["wikibench"][facets[1]]).attr("bgcolor", tableLabelColors[facets[1]][row["wikibench"][facets[1]]]))
                                 .append($("<td>").text(ores_prediction_userIntent).attr("bgcolor", tableLabelColors[facets[1]][ores_prediction_userIntent]))
+                                .append($("<td>").text(ores[revids[r]]["goodfaith"]["score"]["probability"][ores[revids[r]]["goodfaith"]["score"]["prediction"].toString()].toFixed(3)))
                                 .append($("<td>").text(liftwing_prediction).attr("bgcolor", tableLabelColors[liftwing_prediction]))
+                                .append($("<td>").text(liftwing[revids[r]]["probabilities"][liftwing[revids[r]]["prediction"].toString()].toFixed(3)))
                             );
                         }
                     }).fail(function(e) {
