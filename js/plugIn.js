@@ -13,8 +13,8 @@
                 userIntent: "user intent"
             };
             var facetHelp = {
-                editDamage: "The edit damage label indicates whether this edit causes damage to the article or not. The optional checkbox on the right lets you specify that you provide the label with lower confidence when you're not so sure.",
-                userIntent: "The user intent label indicates whether the edit was saved in good or bad faith. The optional checkbox on the right lets you specify that you provide the label with lower confidence when you're not so sure."
+                editDamage: "Please check the <a href=\"/wiki/" + campaignURL + "#Label_definitions\">campaign page</a> for the definition of edit damage. The optional checkbox on the right lets you specify that you provide the label with lower confidence when you're not so sure.",
+                userIntent: "Please check the <a href=\"/wiki/" + campaignURL + "#Label_definitions\">campaign page</a> for the definition of user intent. The optional checkbox on the right lets you specify that you provide the label with lower confidence when you're not so sure."
             };
             var facetLabels = {
                 editDamage: ["damaging", "not damaging"],
@@ -193,7 +193,7 @@
                             new OO.ui.FieldLayout(facetWidgets[facets[i]], {
                                 label: facetNames[facets[i]].charAt(0).toUpperCase() + facetNames[facets[i]].slice(1),
                                 align: "left",
-                                help: facetHelp[facets[i]]
+                                help: new OO.ui.HtmlSnippet(facetHelp[facets[i]])
                             })
                         );
                     }
