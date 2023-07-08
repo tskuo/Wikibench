@@ -7,7 +7,7 @@
                 // init
                 var WIKIBENCH_PREFIX = "Tzusheng/sandbox/Wikipedia:Wikibench";
                 var WIKIBENCH_NAMESPACE = 2;
-                var RATE_LIMIT = 5;
+                var RATE_LIMIT = 10;
                 var ROUND_PRECISION = 2;
                 var entityType = "diff";
                 var language = "en";
@@ -35,19 +35,19 @@
                 });
                 tableDiv.after(progressBar.$element);
                 
-                var loadDataBtn = new OO.ui.ButtonWidget({
-                    label: "Load " + RATE_LIMIT.toString() + " more edits"
-                });
+                // var loadDataBtn = new OO.ui.ButtonWidget({
+                //     label: "Load " + RATE_LIMIT.toString() + " more edits"
+                // });
 
                 var requestLimitMessage = new OO.ui.MessageWidget({
                     type: "error",
                     showClose: true,
-                    label: new OO.ui.HtmlSnippet("The table isn't loading due to rate limits imposed by ORES and LiftWing. Please try again later in a few seconds.")
+                    label: new OO.ui.HtmlSnippet("The table isn't loading due to rate limits imposed by ORES and LiftWing. Please try again later in a few seconds by refreshing your browser.")
                 });
                 requestLimitMessage.toggle(false);
                 requestLimitMessage.on("close", function() {
                     requestLimitMessage.toggle(false);
-                    loadDataBtn.toggle(true);
+                    // loadDataBtn.toggle(true);
                 });
                 tableDiv.after(requestLimitMessage.$element);
 
@@ -142,6 +142,8 @@
                         button3
                     ]
                 });
+                tableDiv.before(layoutSortBtns.$element);
+                layoutSortBtns.toggle(false);
 
                 function getPrefixedPages(entityType, queryContinue, deferred, results) {
                     deferred = deferred || $.Deferred();
@@ -187,9 +189,7 @@
 
                 getPrefixedPages(entityType).done(function(results) {
 
-                    tableDiv.before(layoutSortBtns.$element);
-                    tableDiv.after(loadDataBtn.$element);
-                    progressBar.toggle(false);
+                    // tableDiv.after(loadDataBtn.$element);
 
                     function shuffle(array) {
                         let currentIndex = array.length,  randomIndex;
@@ -212,7 +212,7 @@
 
                     var startIndex = 0;
 
-                    loadDataBtn.on("click", function() {
+                    // loadDataBtn.on("click", function() {
 
                         var renderCount = 0;
                         var revids = [];
@@ -243,23 +243,39 @@
                                 });
                                 promises.push(request1);
 
-                                var request2 = $.ajax({
-                                    url: "https://ores.wikimedia.org/v3/scores/enwiki",
-                                    data: {
-                                        "context": "enwiki",
-                                        "models": "damaging|goodfaith",
-                                        "revids": newId.toString()
-                                    },
-                                    timeout: 30 * 1000, // 30 seconds
-                                    dataType: "json",
-                                    type: "GET"
-                                }).done(function ( result, textStatus, jqXHR ){
-                                    ores[Object.keys(result["enwiki"]["scores"])[0]] = Object.values(result["enwiki"]["scores"])[0]
-                                });
-                                promises.push(request2);
+                                // var request2 = $.ajax({
+                                //     url: "https://ores.wikimedia.org/v3/scores/enwiki",
+                                //     data: {
+                                //         "context": "enwiki",
+                                //         "models": "damaging|goodfaith",
+                                //         "revids": newId.toString()
+                                //     },
+                                //     timeout: 30 * 1000, // 30 seconds
+                                //     dataType: "json",
+                                //     type: "GET"
+                                // }).done(function ( result, textStatus, jqXHR ){
+                                //     ores[Object.keys(result["enwiki"]["scores"])[0]] = Object.values(result["enwiki"]["scores"])[0]
+                                // });
+                                // promises.push(request2);
                                 renderCount++;
                             }
                         }
+                        var request2 = $.ajax({
+                            url: "https://ores.wikimedia.org/v3/scores/enwiki",
+                            data: {
+                                "context": "enwiki",
+                                "models": "damaging|goodfaith",
+                                "revids": revids.join("|")
+                            },
+                            timeout: 30 * 1000, // 30 seconds
+                            dataType: "json",
+                            type: "GET"
+                        }).done(function ( result, textStatus, jqXHR ){
+                            for (var r = 0; r < revids.length; r++) {
+                                ores[revids[r].toString()] = result["enwiki"]["scores"][revids[r].toString()];
+                            }
+                        });
+                        promises.push(request2);
 
                         $.when.apply(null, promises).done(function() {
                             if (startIndex === 0) {
@@ -307,13 +323,16 @@
                                     .append($("<td>").html(liftwing_prediction + " <span style=\"color:" + probColors + "\">(" + liftwing[revids[r]]["probabilities"][liftwing[revids[r]]["prediction"].toString()].toFixed(ROUND_PRECISION).toString() + ")</span>").attr("bgcolor", tableLabelColors[liftwing_prediction]))
                                 );
                             }
+                            progressBar.toggle(false);
+                            layoutSortBtns.toggle(true);
                             startIndex += renderCount;
                             requestLimitMessage.toggle(false);
                         }).fail(function(e) {
-                            loadDataBtn.toggle(false);
+                            // loadDataBtn.toggle(false);
                             requestLimitMessage.toggle(true);
+                            progressBar.toggle(false);
                         });
-                    });
+                    // });
                 });
             });
         }
