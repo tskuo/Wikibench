@@ -135,7 +135,8 @@
                     ]);
 
                     var editPrimaryBtn = new OO.ui.ButtonWidget({
-                        label: "Edit"
+                        label: "Edit",
+                        disabled: true // Change to false when doing demo
                     });
 
                     // Make a subclass of ProcessDialog for editing the primary label
@@ -345,7 +346,8 @@
                     }
 
                     var editUserBtn = new OO.ui.ButtonWidget({
-                        label: "Edit"
+                        label: "Edit",
+                        disabled: true // Change to false when doing demo
                     });
 
                     // Make a subclass of Process Dialog for editing the user label
