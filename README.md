@@ -17,7 +17,7 @@ See the [Wikipedia page](https://en.wikipedia.org/wiki/User:Tzusheng/sandbox/Wik
 
 ### License
 
-All files included in this datasets are released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
+All files included in this dataset are released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
 
 ## Citation
 Tzu-Sheng Kuo, Aaron Halfaker, Zirui Cheng, Jiwoo Kim, Meng-Hsin Wu, Tongshuang Wu, Kenneth Holstein, and Haiyi Zhu. 2024. Wikibench: Community-Driven Data Curation for AI Evaluation on Wikipedia. In *Proceedings of the CHI Conference on Human Factors in Computing Systems (CHI ’24), May 11–16, 2024, Honolulu, HI, USA.* ACM, New York, NY, USA, 24 pages. https://doi.org/10.1145/3613904.3642278
