@@ -36,7 +36,7 @@ https://en.wikipedia.org/wiki/User:Tzusheng/sandbox/Wikipedia:Wikibench/Campaign
 * entityId: The ID of the edit associated with this data point.
 * entityNote: Not used in this dataset.
 * facets: Each edit is associated with some labels. In this dataset, the two facets of labels are edit damage and user intent. For label definitions, refer to the campaign page.
-* primary label: The label collectively determined by community members that is intended to reflect a consensus view.
+* primaryLabel: The label collectively determined by community members that is intended to reflect a consensus view.
   - lastModifier: The person who last modified the primary label.
   - label: The edit damage or user intent primary label of this edit.
   - touched: The timestamp that indicates when the primary label was last modified.
