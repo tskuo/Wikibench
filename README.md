@@ -23,4 +23,5 @@ All files included in the dataset are released under [CC0](https://creativecommo
 Tzu-Sheng Kuo, Aaron Halfaker, Zirui Cheng, Jiwoo Kim, Meng-Hsin Wu, Tongshuang Wu, Kenneth Holstein, and Haiyi Zhu. 2024. Wikibench: Community-Driven Data Curation for AI Evaluation on Wikipedia. In *Proceedings of the CHI Conference on Human Factors in Computing Systems (CHI ’24), May 11–16, 2024, Honolulu, HI, USA.* ACM, New York, NY, USA, 24 pages.
 
 arXiv: https://arxiv.org/abs/2402.14147
+
 ACM Digital Library: https://doi.org/10.1145/3613904.3642278 (The DOI link will become available in May)
